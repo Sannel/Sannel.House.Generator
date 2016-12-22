@@ -1,0 +1,3 @@
+[submodule "src/Sannel.House.Web"]
+	path = src/Sannel.House.Web
+	url = https://github.com/Sannel/Sannel.House.Web.git
