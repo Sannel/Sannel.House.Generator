@@ -4,10 +4,11 @@
     "debugType": "portable",
     "emitEntryPoint": true
   },
-  "dependencies": {
-	"Microsoft.CodeAnalysis.Analyzers": "1.1.0",
-	"Microsoft.CodeAnalysis.CSharp": "1.3.2"
-},
+    "dependencies": {
+        "Microsoft.CodeAnalysis.Analyzers": "1.1.0",
+        "Microsoft.CodeAnalysis.CSharp": "1.3.2",
+					"Sannel.House.Web.Base": "*"
+    },
   "frameworks": {
     "netcoreapp1.1": {
       "dependencies": {

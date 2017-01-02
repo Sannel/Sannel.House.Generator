@@ -13,7 +13,7 @@ namespace Sannel.House.Generator.Common
 		{
 			get
 			{
-				return new String[]{ "XUnit"};
+				return new String[]{ "Xunit"};
 			}
 		}
 

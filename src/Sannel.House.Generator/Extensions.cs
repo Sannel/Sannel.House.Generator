@@ -330,7 +330,7 @@ namespace Sannel.House.Generator
 				}
 				return SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
 					SF.IdentifierName("DateTimeOffset"),
-					SF.IdentifierName("Min"));
+					SF.IdentifierName("MinValue"));
 			}
 
 			if (t == typeof(DayOfWeek?) || t == typeof(DayOfWeek))

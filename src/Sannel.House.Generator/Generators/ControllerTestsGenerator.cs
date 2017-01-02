@@ -166,6 +166,7 @@ namespace Sannel.House.Generator.Generators
 
 		private MethodDeclarationSyntax generateGetTest(String controllerName, String propertyName, Type t)
 		{
+			var wrapper = SF.Identifier("wrapper");
 			var context = SF.Identifier("context");
 			var controller = SF.Identifier("controller");
 			var method = SF.MethodDeclaration(SF.ParseTypeName("void"), "GetTest")
@@ -269,8 +270,14 @@ namespace Sannel.House.Generator.Generators
 					controllerName,
 					SF.ArgumentList().AddArgument(context.Text)));
 
-			var @using = SF.UsingStatement(SF.Block(@using2))
-				.WithDeclaration(Extensions.VariableDeclaration(context.Text, "MockDataContext", SF.ArgumentList(), "IDataContext"));
+			var @using1Blocks = SF.Block(
+									SF.LocalDeclarationStatement(
+									Extensions.VariableDeclaration(context.Text, SF.EqualsValueClause(
+										Extensions.MemberAccess(wrapper.Text, "Context")))),
+									@using2
+								);
+			var @using = SF.UsingStatement(@using1Blocks)
+				.WithDeclaration(Extensions.VariableDeclaration(wrapper.Text, "ContextWrapper", SF.ArgumentList(), "var"));
 
 			method = method.AddBodyStatements(@using);
 
@@ -279,6 +286,7 @@ namespace Sannel.House.Generator.Generators
 
 		private MethodDeclarationSyntax generateGetByIdTest(String controllerName, String propertyName, Type t)
 		{
+			var wrapper = SF.Identifier("wrapper");
 			var context = SF.Identifier("context");
 			var controller = SF.Identifier("controller");
 			var method = SF.MethodDeclaration(SF.ParseTypeName("void"), "GetWithIdTest")
@@ -341,11 +349,9 @@ namespace Sannel.House.Generator.Generators
 				).WithLeadingTrivia(SF.Comment($"// Verify {var2.Text}"))
 			);
 
-			blocks = blocks.AddStatements(
-				SF.ExpressionStatement(
-					Extensions.MemberAccess(actual.Text, prop.Name)
-				)
-			);
+			blocks = blocks.AddStatements(SF.ExpressionStatement(
+				TestBuilder.AssertIsNotNull(Extensions.MemberAccess(actual.Text, prop.Name))
+			));
 			blocks = blocks.AddStatements(generateCompare(var2, actual, props));
 
 			blocks = blocks.AddStatements(
@@ -367,11 +373,9 @@ namespace Sannel.House.Generator.Generators
 				).WithLeadingTrivia(SF.Comment($"// Verify {var3.Text}"))
 			);
 
-			blocks = blocks.AddStatements(
-				SF.ExpressionStatement(
-					Extensions.MemberAccess(actual.Text, prop.Name)
-				)
-			);
+			blocks = blocks.AddStatements(SF.ExpressionStatement(
+				TestBuilder.AssertIsNotNull(Extensions.MemberAccess(actual.Text, prop.Name))
+			));
 			blocks = blocks.AddStatements(generateCompare(var3, actual, props));
 
 			var @using2 = SF.UsingStatement(blocks)
@@ -379,8 +383,14 @@ namespace Sannel.House.Generator.Generators
 					controllerName,
 					SF.ArgumentList().AddArgument(context.Text)));
 
-			var @using = SF.UsingStatement(SF.Block(@using2))
-				.WithDeclaration(Extensions.VariableDeclaration(context.Text, "MockDataContext", SF.ArgumentList(), "IDataContext"));
+			var @using1Blocks = SF.Block(
+									SF.LocalDeclarationStatement(
+									Extensions.VariableDeclaration(context.Text, SF.EqualsValueClause(
+										Extensions.MemberAccess(wrapper.Text, "Context")))),
+									@using2
+								);
+			var @using = SF.UsingStatement(@using1Blocks)
+				.WithDeclaration(Extensions.VariableDeclaration(wrapper.Text, "ContextWrapper", SF.ArgumentList(), "var"));
 
 			method = method.AddBodyStatements(@using);
 
@@ -395,7 +405,6 @@ namespace Sannel.House.Generator.Generators
 
 			unit = unit.AddUsing("System").WithLeadingTrivia(GetLicenseComment());
 			unit = unit.AddUsings(
-					"NUnit.Framework",
 					"Sannel.House.Web.Base.Interfaces",
 					"Sannel.House.Web.Base.Models",
 					"Sannel.House.Web.Controllers.api",
@@ -403,10 +412,11 @@ namespace Sannel.House.Generator.Generators
 					"System.Collections.Generic",
 					"System.Linq",
 					"System.Threading.Tasks");
+			unit = unit.AddUsings(TestBuilder.Namespaces);
 
 			var @class = SF.ClassDeclaration(filename)
-				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword))
-				.AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName("TestBase")));
+				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword));
+				//.AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName("TestBase")));
 
 			var att = TestBuilder.GetClassAttribute();
 			if (att != null)
