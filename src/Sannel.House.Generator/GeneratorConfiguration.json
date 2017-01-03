@@ -69,7 +69,7 @@
 		{
 			"Name":  "ControllerTests",
 			"Directory":  "Web\\Tests",
-			"FileName":  "{TypeName}ControllerTests.cs",
+									"FileName": "{TypeName}ControllerTests.Generated.cs",
 			"Generator":  "ControllerTestsGenerator",
 			"TestBuilder": "XUnit",
 			"HttpBuilder": null

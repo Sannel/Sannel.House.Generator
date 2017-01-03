@@ -43,6 +43,7 @@ namespace Sannel.House.Generator.Generators
 
 		private BlockSyntax generateSeeds(Type t, SyntaxToken context, String propertyName, out SyntaxToken var1, out SyntaxToken var2, out SyntaxToken var3, out PropertyInfo[] props)
 		{
+			var wrapper = SF.Identifier("wrapper");
 			var1 = SF.Identifier("var1");
 			var2 = SF.Identifier("var2");
 			var3 = SF.Identifier("var3");
@@ -154,7 +155,7 @@ namespace Sannel.House.Generator.Generators
 				SF.ExpressionStatement(
 					SF.InvocationExpression(
 						Extensions.MemberAccess(
-							context.Text,
+							wrapper.Text,
 							"SaveChanges"
 						)
 					)
@@ -277,7 +278,9 @@ namespace Sannel.House.Generator.Generators
 									@using2
 								);
 			var @using = SF.UsingStatement(@using1Blocks)
-				.WithDeclaration(Extensions.VariableDeclaration(wrapper.Text, "ContextWrapper", SF.ArgumentList(), "var"));
+				.WithDeclaration(Extensions.VariableDeclaration(wrapper.Text, "ContextWrapper", SF.ArgumentList().AddArguments(
+					SF.Argument(SF.ThisExpression())
+					), "var"));
 
 			method = method.AddBodyStatements(@using);
 
@@ -390,7 +393,9 @@ namespace Sannel.House.Generator.Generators
 									@using2
 								);
 			var @using = SF.UsingStatement(@using1Blocks)
-				.WithDeclaration(Extensions.VariableDeclaration(wrapper.Text, "ContextWrapper", SF.ArgumentList(), "var"));
+				.WithDeclaration(Extensions.VariableDeclaration(wrapper.Text, "ContextWrapper", SF.ArgumentList().AddArguments(
+					SF.Argument(SF.ThisExpression())
+					), "var"));
 
 			method = method.AddBodyStatements(@using);
 
@@ -415,8 +420,8 @@ namespace Sannel.House.Generator.Generators
 			unit = unit.AddUsings(TestBuilder.Namespaces);
 
 			var @class = SF.ClassDeclaration(filename)
-				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword));
-				//.AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName("TestBase")));
+				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword), SF.Token(SyntaxKind.PartialKeyword))
+				.AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName("IContextWrapperTest")));
 
 			var att = TestBuilder.GetClassAttribute();
 			if (att != null)
