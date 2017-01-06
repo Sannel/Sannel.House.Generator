@@ -18,23 +18,7 @@ namespace Sannel.House.Generator.Generators
 		{
 
 		}
-
-		private ConstructorDeclarationSyntax generateConstructor(SyntaxToken name, Type t)
-		{
-			var identifier = SF.Identifier("context");
-			var parameter = SF.Parameter(identifier).WithType(SF.ParseTypeName("IDataContext"));
-
-			var con = SF.ConstructorDeclaration(name);
-			con = con.AddModifiers(SF.Token(SyntaxKind.PublicKeyword));
-			con = con.AddParameterListParameters(parameter);
-			var statment = SF.ExpressionStatement(SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
-				SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, SF.ThisExpression(), SF.IdentifierName(identifier.Text)),
-				SF.IdentifierName(identifier.ValueText)));
-			con = con.AddBodyStatements(statment);
-
-			return con;
-		}
-
+		
 		private MethodDeclarationSyntax generateGetMethod(String propertyName, Type t)
 		{
 			var method = SF.MethodDeclaration(SF.GenericName("IEnumerable").AddTypeArgumentListArguments(SF.ParseTypeName(t.Name)), "Get")
@@ -135,6 +119,37 @@ namespace Sannel.House.Generator.Generators
 
 		}
 
+		private MethodDeclarationSyntax generatePostMethod(String propertyName, Type t)
+		{
+			var props = t.GetProperties();
+			var data = SF.Identifier("data");
+
+			var key = props.GetKeyProperty();
+			if(key == null)
+			{
+				return null;
+			}
+
+			var method = SF.MethodDeclaration(SF.GenericName("Result")
+					.AddTypeArgumentListArguments(SF.ParseTypeName(t.Name))
+					, "Post")
+				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword))
+				.AddParameterListParameters(
+					SF.Parameter(data).WithType(SF.ParseTypeName(t.Name))
+				)
+				.WithAttributeLists(
+					new SyntaxList<AttributeListSyntax>().Add(
+						SF.AttributeList().AddAttributes(
+							SF.Attribute(SF.IdentifierName("HttpPost"))
+						)
+					)
+				);
+
+			method = method.WithBody(SF.Block());
+
+			return method;
+		}
+
 		protected override CompilationUnitSyntax internalGenerate(string propertyName, Type t)
 		{
 			var fileName = $"{t.Name}Controller";
@@ -159,20 +174,17 @@ namespace Sannel.House.Generator.Generators
 				)));
 
 
-			@class = @class.AddMembers(SyntaxFactory.FieldDeclaration(
-				new SyntaxList<AttributeListSyntax>(),
-				SF.TokenList(SF.Token(SyntaxKind.PrivateKeyword)),
-				SF.VariableDeclaration(
-					SF.ParseTypeName("IDataContext"),
-					SF.SeparatedList(new[] {
-						SF.VariableDeclarator(SF.Identifier("context"))
-					}))));
-			@class = @class.AddMembers(generateConstructor(@class.Identifier, t));
 			@class = @class.AddMembers(generateGetMethod(propertyName, t));
 			var get2 = generateGetWithIdMethod(propertyName, t);
 			if (get2 != null)
 			{
 				@class = @class.AddMembers(get2);
+			}
+
+			var post = generatePostMethod(propertyName, t);
+			if(post != null)
+			{
+				@class = @class.AddMembers(post);
 			}
 
 
