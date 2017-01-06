@@ -61,7 +61,7 @@
 		{
 			"Name":  "Controller",
 			"Directory":  "Web\\Controllers",
-			"FileName":  "{TypeName}Controller.cs",
+			"FileName":  "{TypeName}Controller.Generated.cs",
 			"Generator":  "ControllerGenerator",
 			"TestBuilder": null,
 			"HttpBuilder": null
