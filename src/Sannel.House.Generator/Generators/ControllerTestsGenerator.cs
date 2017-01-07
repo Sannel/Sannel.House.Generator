@@ -14,6 +14,12 @@ namespace Sannel.House.Generator.Generators
 {
 	public class ControllerTestsGenerator : GeneratorBase
 	{
+		private SyntaxToken wrapper = SF.Identifier("wrapper");
+		private SyntaxToken context = SF.Identifier("context");
+		private SyntaxToken controller = SF.Identifier("controller");
+		private SyntaxToken logger = SF.Identifier("logger");
+		private SyntaxToken logFactory = SF.Identifier("logFactory");
+
 		private StatementSyntax[] generateCompare(SyntaxToken expected, SyntaxToken actual, PropertyInfo[] props)
 		{
 			List<StatementSyntax> statements = new List<StatementSyntax>();
@@ -39,6 +45,51 @@ namespace Sannel.House.Generator.Generators
 			}
 
 			return statements.ToArray();
+		}
+
+		private BlockSyntax wrapBlocks(BlockSyntax blocks, String controllerName)
+		{
+			var @using2 = SF.UsingStatement(blocks)
+				.WithDeclaration(Extensions.VariableDeclaration(controller.Text,
+					controllerName,
+					SF.ArgumentList().AddArgument(context.Text)
+					.AddArgument(logger.Text)));
+
+			var @using1Blocks = SF.Block(
+									SF.LocalDeclarationStatement(
+									Extensions.VariableDeclaration(context.Text, SF.EqualsValueClause(
+										Extensions.MemberAccess(wrapper.Text, "Context")))),
+									@using2
+								);
+			var @using = SF.UsingStatement(@using1Blocks)
+				.WithDeclaration(Extensions.VariableDeclaration(wrapper.Text, "ContextWrapper", SF.ArgumentList().AddArguments(
+					SF.Argument(SF.ThisExpression())
+					), "var"));
+
+			return SF.Block().AddStatements(
+				SF.LocalDeclarationStatement(
+						Extensions.VariableDeclaration(logFactory.Text,
+							SF.EqualsValueClause(SF.ObjectCreationExpression(SF.ParseTypeName("LoggerFactory")))
+						)
+					),
+					SF.LocalDeclarationStatement(
+						Extensions.VariableDeclaration(logger.Text,
+							SF.EqualsValueClause(
+								SF.InvocationExpression(
+									Extensions.MemberAccess(
+										SF.IdentifierName(logFactory),
+										SF.GenericName(SF.Identifier("CreateLogger"))
+										.AddTypeArgumentListArguments(
+											SF.ParseTypeName(controllerName)
+										)
+									)
+								)
+							)
+						)
+					),
+					@using
+				);
+
 		}
 
 		private BlockSyntax generateSeeds(Type t, SyntaxToken context, String propertyName, out SyntaxToken var1, out SyntaxToken var2, out SyntaxToken var3, out PropertyInfo[] props)
@@ -167,9 +218,6 @@ namespace Sannel.House.Generator.Generators
 
 		private MethodDeclarationSyntax generateGetTest(String controllerName, String propertyName, Type t)
 		{
-			var wrapper = SF.Identifier("wrapper");
-			var context = SF.Identifier("context");
-			var controller = SF.Identifier("controller");
 			var method = SF.MethodDeclaration(SF.ParseTypeName("void"), "GetTest")
 				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword));
 
@@ -266,23 +314,8 @@ namespace Sannel.House.Generator.Generators
 			));
 			blocks = blocks.AddStatements(generateCompare(var1, three, props));
 
-			var @using2 = SF.UsingStatement(blocks)
-				.WithDeclaration(Extensions.VariableDeclaration(controller.Text,
-					controllerName,
-					SF.ArgumentList().AddArgument(context.Text)));
 
-			var @using1Blocks = SF.Block(
-									SF.LocalDeclarationStatement(
-									Extensions.VariableDeclaration(context.Text, SF.EqualsValueClause(
-										Extensions.MemberAccess(wrapper.Text, "Context")))),
-									@using2
-								);
-			var @using = SF.UsingStatement(@using1Blocks)
-				.WithDeclaration(Extensions.VariableDeclaration(wrapper.Text, "ContextWrapper", SF.ArgumentList().AddArguments(
-					SF.Argument(SF.ThisExpression())
-					), "var"));
-
-			method = method.AddBodyStatements(@using);
+			method = method.AddBodyStatements(wrapBlocks(blocks, controllerName));
 
 			return method;
 		}
@@ -381,23 +414,7 @@ namespace Sannel.House.Generator.Generators
 			));
 			blocks = blocks.AddStatements(generateCompare(var3, actual, props));
 
-			var @using2 = SF.UsingStatement(blocks)
-				.WithDeclaration(Extensions.VariableDeclaration(controller.Text,
-					controllerName,
-					SF.ArgumentList().AddArgument(context.Text)));
-
-			var @using1Blocks = SF.Block(
-									SF.LocalDeclarationStatement(
-									Extensions.VariableDeclaration(context.Text, SF.EqualsValueClause(
-										Extensions.MemberAccess(wrapper.Text, "Context")))),
-									@using2
-								);
-			var @using = SF.UsingStatement(@using1Blocks)
-				.WithDeclaration(Extensions.VariableDeclaration(wrapper.Text, "ContextWrapper", SF.ArgumentList().AddArguments(
-					SF.Argument(SF.ThisExpression())
-					), "var"));
-
-			method = method.AddBodyStatements(@using);
+			method = method.AddBodyStatements(wrapBlocks(blocks, controllerName));
 
 			return method;
 		}
