@@ -119,18 +119,90 @@ namespace Sannel.House.Generator.Generators
 
 		}
 
-		private IfStatementSyntax postRequiredIfStatment(PropertyInfo requiredInfo)
+		private IfStatementSyntax postRequiredIfStatment(SyntaxToken data, SyntaxToken result, PropertyInfo requiredInfo)
 		{
 			var type = requiredInfo.PropertyType;
 			if(type == typeof(String))
 			{
+				/*if (String.IsNullOrWhiteSpace(device.Name))
+			{
+				result.Errors.Add($"{nameof(device.Name)} must have a non empty value");
+				return result;
+			}*/
+				StringToken token = $"nameof({data.Text}.{requiredInfo.Name})";
+				token = token.AsInterpolation();
+				var istring = token.ToInterpolatedString(" must have a non empty value");
 
+				return SF.IfStatement(
+					SF.InvocationExpression(
+						Extensions.MemberAccess(
+							SF.IdentifierName("String"),
+							SF.IdentifierName("IsNullOrWhiteSpace")
+						)
+					).AddArgumentListArguments(
+						SF.Argument(
+							Extensions.MemberAccess(
+								SF.IdentifierName(data),
+								SF.IdentifierName(requiredInfo.Name)
+							)
+						)
+					),
+					SF.Block().AddStatements(
+						SF.ExpressionStatement(
+							SF.InvocationExpression(
+								Extensions.MemberAccess(
+									Extensions.MemberAccess(
+										SF.IdentifierName(result),
+										SF.IdentifierName("Errors")
+									),
+									SF.IdentifierName("Add")
+								)
+							)
+							.AddArgumentListArguments(
+								SF.Argument(istring)
+							)
+						),
+						SF.ReturnStatement(
+							SF.IdentifierName(result)
+						)
+					)
+				);
 			}
 			else
 			{
-				Console.WriteLine($"\t\t{type.Name} is not currently supported for required");
+				StringToken token = $"nameof({data.Text}.{requiredInfo.Name})";
+				token = token.AsInterpolation();
+				var istring = token.ToInterpolatedString(" must not be null");
+
+				return SF.IfStatement(
+						SF.BinaryExpression(SyntaxKind.EqualsExpression,
+							Extensions.MemberAccess(
+								SF.IdentifierName(data),
+								SF.IdentifierName(requiredInfo.Name)
+							),
+							SF.LiteralExpression(SyntaxKind.NullLiteralExpression)
+						),
+						SF.Block().AddStatements(
+						SF.ExpressionStatement(
+							SF.InvocationExpression(
+								Extensions.MemberAccess(
+									Extensions.MemberAccess(
+										SF.IdentifierName(result),
+										SF.IdentifierName("Errors")
+									),
+									SF.IdentifierName("Add")
+								)
+							)
+							.AddArgumentListArguments(
+								SF.Argument(istring)
+							)
+						),
+						SF.ReturnStatement(
+							SF.IdentifierName(result)
+						)
+					)
+					);
 			}
-			return null;
 		}
 
 		private MethodDeclarationSyntax generatePostMethod(String propertyName, Type t)
@@ -276,7 +348,7 @@ namespace Sannel.House.Generator.Generators
 				{
 					if (prop.IsRequired())
 					{
-						var @if = postRequiredIfStatment(prop);
+						var @if = postRequiredIfStatment(data, result, prop);
 						if(@if != null)
 						{
 							blocks = blocks.AddStatements(@if);
@@ -284,6 +356,17 @@ namespace Sannel.House.Generator.Generators
 					}
 				}
 			}
+
+			blocks = blocks.AddStatements(
+				SF.ExpressionStatement(
+					SF.InvocationExpression(
+						SF.IdentifierName("postExtraVerification")
+					).AddArgumentListArguments(
+						SF.Argument(SF.IdentifierName(data)),
+						SF.Argument(SF.IdentifierName(result))
+					)
+				)
+				);
 
 			method = method.WithBody(blocks);
 
@@ -325,6 +408,21 @@ namespace Sannel.House.Generator.Generators
 			if (post != null)
 			{
 				@class = @class.AddMembers(post);
+				/*	partial void postExtraVerification(Device device, Result<Device> result);
+		partial void postExtraReset(Device device, Result<Device> result);*/
+				@class = @class.AddMembers(SF.MethodDeclaration(SF.ParseTypeName("void"),
+					"postExtraVerification")
+					.AddModifiers(SF.Token(SyntaxKind.PartialKeyword))
+					.AddParameterListParameters(
+						SF.Parameter(SF.Identifier("data")).WithType(SF.ParseTypeName(t.Name)),
+						SF.Parameter(SF.Identifier("result")).WithType(
+							SF.GenericName("Result")
+							.AddTypeArgumentListArguments(
+								SF.ParseTypeName(t.Name)
+							)
+						)
+					)
+				);
 			}
 
 

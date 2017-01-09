@@ -443,23 +443,17 @@ namespace Sannel.House.Generator
 			return ((StringToken)token.Text).AsInterpolation();
 		}
 
-		public static InterpolatedStringExpressionSyntax ToInterpolatedString(this String value, params StringToken[] tokens)
+		public static InterpolatedStringExpressionSyntax ToInterpolatedString(this StringToken value, params StringToken[] tokens)
 		{
+			List<StringToken> ltokens = new List<StringToken>();
+			ltokens.Add(value);
+			if (tokens != null)
+			{
+				ltokens.AddRange(tokens);
+			}
 			var ise = SF.InterpolatedStringExpression(SF.Token(SyntaxKind.InterpolatedStringStartToken));
-			ise = ise.AddContents(
-					SF.InterpolatedStringText()
-					.WithTextToken(
-						SF.Token(
-							SF.TriviaList(),
-							SyntaxKind.InterpolatedStringTextToken,
-							value,
-							value,
-							SF.TriviaList()
-						)
-					)
-				);
 
-			foreach (var token in tokens)
+			foreach (var token in ltokens)
 			{
 				if (token.IsInterpolation)
 				{
@@ -485,6 +479,11 @@ namespace Sannel.House.Generator
 			}
 
 			return ise;
+		}
+
+		public static InterpolatedStringExpressionSyntax ToInterpolatedString(this String value, params StringToken[] tokens)
+		{
+			return ToInterpolatedString((StringToken)value, tokens);
 		}
 	}
 }
