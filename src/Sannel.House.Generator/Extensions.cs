@@ -396,6 +396,12 @@ namespace Sannel.House.Generator
 			return att != null && att.Ignore;
 		}
 
+		public static bool IsRequired(this PropertyInfo pi)
+		{
+			var att = pi.GetCustomAttribute<GenerationAttribute>();
+			return att != null && att.IsRequired;
+		}
+
 		public static LiteralExpressionSyntax ToLiteral(this int number)
 		{
 			return SF.LiteralExpression(SyntaxKind.NumericLiteralExpression, SF.Literal(number));

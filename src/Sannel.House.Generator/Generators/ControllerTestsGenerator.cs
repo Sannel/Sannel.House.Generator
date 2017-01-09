@@ -69,7 +69,7 @@ namespace Sannel.House.Generator.Generators
 			return SF.Block().AddStatements(
 				SF.LocalDeclarationStatement(
 						Extensions.VariableDeclaration(logFactory.Text,
-							SF.EqualsValueClause(SF.ObjectCreationExpression(SF.ParseTypeName("LoggerFactory")))
+							SF.EqualsValueClause(SF.ObjectCreationExpression(SF.ParseTypeName("LoggerFactory")).AddArgumentListArguments())
 						)
 					),
 					SF.LocalDeclarationStatement(
@@ -433,7 +433,8 @@ namespace Sannel.House.Generator.Generators
 					"Sannel.House.Web.Mocks",
 					"System.Collections.Generic",
 					"System.Linq",
-					"System.Threading.Tasks");
+					"System.Threading.Tasks",
+					"Microsoft.Extensions.Logging");
 			unit = unit.AddUsings(TestBuilder.Namespaces);
 
 			var @class = SF.ClassDeclaration(filename)

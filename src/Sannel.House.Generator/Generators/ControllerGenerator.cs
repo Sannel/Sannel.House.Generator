@@ -18,7 +18,7 @@ namespace Sannel.House.Generator.Generators
 		{
 
 		}
-		
+
 		private MethodDeclarationSyntax generateGetMethod(String propertyName, Type t)
 		{
 			var method = SF.MethodDeclaration(SF.GenericName("IEnumerable").AddTypeArgumentListArguments(SF.ParseTypeName(t.Name)), "Get")
@@ -119,13 +119,28 @@ namespace Sannel.House.Generator.Generators
 
 		}
 
+		private IfStatementSyntax postRequiredIfStatment(PropertyInfo requiredInfo)
+		{
+			var type = requiredInfo.PropertyType;
+			if(type == typeof(String))
+			{
+
+			}
+			else
+			{
+				Console.WriteLine($"\t\t{type.Name} is not currently supported for required");
+			}
+			return null;
+		}
+
 		private MethodDeclarationSyntax generatePostMethod(String propertyName, Type t)
 		{
 			var props = t.GetProperties();
 			var data = SF.Identifier("data");
+			var result = SF.Identifier("result");
 
 			var key = props.GetKeyProperty();
-			if(key == null)
+			if (key == null)
 			{
 				return null;
 			}
@@ -135,7 +150,12 @@ namespace Sannel.House.Generator.Generators
 					, "Post")
 				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword))
 				.AddParameterListParameters(
-					SF.Parameter(data).WithType(SF.ParseTypeName(t.Name))
+					SF.Parameter(data)
+						.WithType(SF.ParseTypeName(t.Name))
+						.AddAttributeLists(
+							SF.AttributeList()
+							.AddAttributes(SF.Attribute(SF.IdentifierName("FromBody")))
+						)
 				)
 				.WithAttributeLists(
 					new SyntaxList<AttributeListSyntax>().Add(
@@ -145,7 +165,127 @@ namespace Sannel.House.Generator.Generators
 					)
 				);
 
-			method = method.WithBody(SF.Block());
+			var blocks = SF.Block();
+			/*var result = new Result<Device>();
+			result.Data = device;
+			result.Success = false;*/
+			blocks = blocks.AddStatements(
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(result.Text,
+						SF.EqualsValueClause(
+							SF.ObjectCreationExpression(SF.GenericName("Result").AddTypeArgumentListArguments(
+									SF.ParseTypeName(t.Name)
+							))
+						)
+					)
+				),
+				SF.ExpressionStatement(
+					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+						Extensions.MemberAccess(
+							result.Text,
+							"Data"
+						),
+						SF.IdentifierName(data)
+					)
+				),
+				SF.ExpressionStatement(
+					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+						Extensions.MemberAccess(
+							result.Text,
+							"Success"
+						),
+						false.ToLiteral()
+					)
+				)
+				);
+
+			/*if (device == null)
+			{
+				result.Errors.Add($"{nameof(device)} cannot be null");
+				return result;
+			}*/
+			blocks = blocks.AddStatements(
+				SF.IfStatement(
+	SF.BinaryExpression(
+		SyntaxKind.EqualsExpression,
+		SF.IdentifierName("data"),
+		SF.LiteralExpression(
+			SyntaxKind.NullLiteralExpression)),
+   SF.Block(
+		SF.ExpressionStatement(
+			SF.InvocationExpression(
+				SF.MemberAccessExpression(
+					SyntaxKind.SimpleMemberAccessExpression,
+					SF.MemberAccessExpression(
+						SyntaxKind.SimpleMemberAccessExpression,
+						SF.IdentifierName("result"),
+						SF.IdentifierName("Errors")),
+					SF.IdentifierName("Add")))
+			.WithArgumentList(
+				SF.ArgumentList(
+					SF.SingletonSeparatedList<ArgumentSyntax>(
+						SF.Argument(
+							SF.InterpolatedStringExpression(
+								SF.Token(SyntaxKind.InterpolatedStringStartToken))
+							.WithContents(
+								SF.List<InterpolatedStringContentSyntax>(
+									new InterpolatedStringContentSyntax[]{
+										SF.Interpolation(
+											SF.InvocationExpression(
+												SF.IdentifierName("nameof"))
+											.WithArgumentList(
+												SF.ArgumentList(
+													SF.SingletonSeparatedList<ArgumentSyntax>(
+													   SF.Argument(
+															SF.IdentifierName("data")))))),
+										SF.InterpolatedStringText()
+										.WithTextToken(
+											SF.Token(
+												SF.TriviaList(),
+												SyntaxKind.InterpolatedStringTextToken,
+												" cannot be null",
+												" cannot be null",
+												SF.TriviaList()))}))))))),
+		SF.ReturnStatement(
+			SF.IdentifierName("result"))))
+				);
+
+			var keyType = SF.ParseTypeName(key.PropertyType.Name);
+			ExpressionSyntax defaultValue = keyType.GetDefaultValue();
+			if(key.PropertyType == typeof(Guid))
+			{
+				Random rand = new Random();
+				defaultValue = rand.LiteralForProperty(key.PropertyType, key.Name);
+			}
+
+			blocks = blocks.AddStatements(
+				SF.ExpressionStatement(
+				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					Extensions.MemberAccess(
+						SF.IdentifierName(data),
+						SF.IdentifierName(key.Name)
+					),
+					defaultValue
+				)
+				)
+				);
+
+			foreach(var prop in props)
+			{
+				if (!prop.ShouldIgnore() && !prop.IsKey())
+				{
+					if (prop.IsRequired())
+					{
+						var @if = postRequiredIfStatment(prop);
+						if(@if != null)
+						{
+							blocks = blocks.AddStatements(@if);
+						}
+					}
+				}
+			}
+
+			method = method.WithBody(blocks);
 
 			return method;
 		}
@@ -182,7 +322,7 @@ namespace Sannel.House.Generator.Generators
 			}
 
 			var post = generatePostMethod(propertyName, t);
-			if(post != null)
+			if (post != null)
 			{
 				@class = @class.AddMembers(post);
 			}
