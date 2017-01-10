@@ -396,6 +396,11 @@ namespace Sannel.House.Generator
 			return att != null && att.Ignore;
 		}
 
+		public static GenerationAttribute GetGenerationAttribute(this PropertyInfo pi)
+		{
+			return pi.GetCustomAttribute<GenerationAttribute>();
+		}
+
 		public static bool IsRequired(this PropertyInfo pi)
 		{
 			var att = pi.GetCustomAttribute<GenerationAttribute>();
