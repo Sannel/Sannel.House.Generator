@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using System.IO;
 using System.Reflection;
 using Sannel.House.Generator.Common;
+using Sannel.House.Web.Base;
 
 namespace Sannel.House.Generator.Generators
 {
@@ -160,6 +161,43 @@ namespace Sannel.House.Generator.Generators
 					)
 				)
 			);
+		}
+		private IfStatementSyntax postGreaterThenZeroStatment(SyntaxToken data, SyntaxToken result, PropertyInfo requiredInfo)
+		{
+			var type = requiredInfo.PropertyType;
+				StringToken token = $"nameof({data.Text}.{requiredInfo.Name})";
+				token = token.AsInterpolation();
+				var istring = token.ToInterpolatedString(" must be greater then 0");
+
+				return SF.IfStatement(
+						SF.BinaryExpression(SyntaxKind.GreaterThanExpression,
+							Extensions.MemberAccess(
+								SF.IdentifierName(data),
+								SF.IdentifierName(requiredInfo.Name)
+							),
+							0.ToLiteral()
+						),
+						SF.Block().AddStatements(
+						SF.ExpressionStatement(
+							SF.InvocationExpression(
+								Extensions.MemberAccess(
+									Extensions.MemberAccess(
+										SF.IdentifierName(result),
+										SF.IdentifierName("Errors")
+									),
+									SF.IdentifierName("Add")
+								)
+							)
+							.AddArgumentListArguments(
+								SF.Argument(istring)
+							)
+						),
+						SF.ReturnStatement(
+							SF.IdentifierName(result)
+						)
+					)
+					);
+
 		}
 
 		private IfStatementSyntax postRequiredIfStatment(SyntaxToken data, SyntaxToken result, PropertyInfo requiredInfo)
@@ -359,6 +397,14 @@ namespace Sannel.House.Generator.Generators
 								blocks = blocks.AddStatements(@if);
 							}
 						}
+						if (genAtt.GreaterThenZero)
+						{
+							var @if = postGreaterThenZeroStatment(data, result, prop);
+							if(@if != null)
+							{
+								blocks = blocks.AddStatements(@if);
+							}
+						}
 					}
 				}
 			}
@@ -495,6 +541,9 @@ namespace Sannel.House.Generator.Generators
 			unit = unit.AddUsings(SF.UsingDirective(SF.IdentifierName("Sannel.House.Web.Base.Models")));
 			unit = unit.AddUsings(SF.UsingDirective(SF.IdentifierName("Sannel.House.Web.Base.Interfaces")));
 
+			var ti = t.GetTypeInfo();
+			var ga = ti.GetCustomAttribute<GenerationAttribute>() ?? new GenerationAttribute();
+
 			var @class = SF.ClassDeclaration(fileName).AddModifiers(SF.Token(SyntaxKind.PublicKeyword), SF.Token(SyntaxKind.PartialKeyword)).AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName("Controller")));
 
 			@class = @class.AddAttributeLists(SF.AttributeList().AddAttributes(SF.Attribute(
@@ -506,39 +555,49 @@ namespace Sannel.House.Generator.Generators
 				)));
 
 
-			@class = @class.AddMembers(generateGetMethod(propertyName, t));
-			var get2 = generateGetWithIdMethod(propertyName, t);
-			if (get2 != null)
+			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Get))
 			{
-				@class = @class.AddMembers(get2);
+				@class = @class.AddMembers(generateGetMethod(propertyName, t));
 			}
 
-			var post = generatePostMethod(propertyName, t);
-			if (post != null)
+			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.GetWithId))
 			{
-				@class = @class.AddMembers(post);
-				/*	partial void postExtraVerification(Device device, Result<Device> result);
-		partial void postExtraReset(Device device, Result<Device> result);*/
-				@class = @class.AddMembers(SF.MethodDeclaration(SF.ParseTypeName("void"),
-					"postExtraVerification")
-					.AddModifiers(SF.Token(SyntaxKind.PartialKeyword))
-					.AddParameterListParameters(
-						SF.Parameter(SF.Identifier("data")).WithType(SF.ParseTypeName(t.Name)),
-						SF.Parameter(SF.Identifier("result")).WithType(
-							SF.GenericName("Result")
-							.AddTypeArgumentListArguments(
-								SF.ParseTypeName(t.Name)
+				var get2 = generateGetWithIdMethod(propertyName, t);
+				if (get2 != null)
+				{
+					@class = @class.AddMembers(get2);
+				}
+			}
+
+			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Post))
+			{
+				var post = generatePostMethod(propertyName, t);
+				if (post != null)
+				{
+					@class = @class.AddMembers(post);
+					/*	partial void postExtraVerification(Device device, Result<Device> result);
+			partial void postExtraReset(Device device, Result<Device> result);*/
+					@class = @class.AddMembers(SF.MethodDeclaration(SF.ParseTypeName("void"),
+						"postExtraVerification")
+						.AddModifiers(SF.Token(SyntaxKind.PartialKeyword))
+						.AddParameterListParameters(
+							SF.Parameter(SF.Identifier("data")).WithType(SF.ParseTypeName(t.Name)),
+							SF.Parameter(SF.Identifier("result")).WithType(
+								SF.GenericName("Result")
+								.AddTypeArgumentListArguments(
+									SF.ParseTypeName(t.Name)
+								)
 							)
-						)
-					).WithSemicolonToken(SF.Token(SyntaxKind.SemicolonToken))
-				);
-				@class = @class.AddMembers(SF.MethodDeclaration(SF.ParseTypeName("void"),
-					"postExtraReset")
-					.AddModifiers(SF.Token(SyntaxKind.PartialKeyword))
-					.AddParameterListParameters(
-						SF.Parameter(SF.Identifier("data")).WithType(SF.ParseTypeName(t.Name))
-					).WithSemicolonToken(SF.Token(SyntaxKind.SemicolonToken))
-				);
+						).WithSemicolonToken(SF.Token(SyntaxKind.SemicolonToken))
+					);
+					@class = @class.AddMembers(SF.MethodDeclaration(SF.ParseTypeName("void"),
+						"postExtraReset")
+						.AddModifiers(SF.Token(SyntaxKind.PartialKeyword))
+						.AddParameterListParameters(
+							SF.Parameter(SF.Identifier("data")).WithType(SF.ParseTypeName(t.Name))
+						).WithSemicolonToken(SF.Token(SyntaxKind.SemicolonToken))
+					);
+				}
 			}
 
 
