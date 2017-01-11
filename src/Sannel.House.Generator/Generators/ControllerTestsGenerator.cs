@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using System.IO;
 using System.Reflection;
 using Sannel.House.Generator.Common;
+using Sannel.House.Web.Base;
 
 namespace Sannel.House.Generator.Generators
 {
@@ -419,6 +420,21 @@ namespace Sannel.House.Generator.Generators
 			return method;
 		}
 
+		private MethodDeclarationSyntax generatePostTest(String controllerName, String propertyName, Type t)
+		{
+			var wrapper = SF.Identifier("wrapper");
+			var context = SF.Identifier("context");
+			var controller = SF.Identifier("controller");
+			var method = SF.MethodDeclaration(SF.ParseTypeName("void"), "GetWithIdTest")
+				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword));
+
+			var blocks = SF.Block();
+
+			method = method.AddBodyStatements(wrapBlocks(blocks, controllerName));
+
+			return method;
+		}
+
 		protected override CompilationUnitSyntax internalGenerate(string propertyName, Type t)
 		{
 			var controllerName = $"{t.Name}Controller";
@@ -448,9 +464,21 @@ namespace Sannel.House.Generator.Generators
 					SF.AttributeList().AddAttributes(att)
 				);
 			}
+			var ti = t.GetTypeInfo();
+			var ga = ti.GetCustomAttribute<GenerationAttribute>() ?? new GenerationAttribute();
 
-			@class = @class.AddMembers(generateGetTest(controllerName, propertyName, t));
-			@class = @class.AddMembers(generateGetByIdTest(controllerName, propertyName, t));
+			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Get))
+			{
+				@class = @class.AddMembers(generateGetTest(controllerName, propertyName, t));
+			}
+			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.GetWithId))
+			{
+				@class = @class.AddMembers(generateGetByIdTest(controllerName, propertyName, t));
+			}
+			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Post))
+			{
+				@class = @class.AddMembers(generatePostTest(controllerName, propertyName, t));
+			}
 
 			return unit.AddMembers(SF.NamespaceDeclaration(SF.IdentifierName("Sannel.House.Web.Tests")).AddMembers(@class));
 		}

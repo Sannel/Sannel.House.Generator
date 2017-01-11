@@ -170,7 +170,7 @@ namespace Sannel.House.Generator.Generators
 				var istring = token.ToInterpolatedString(" must be greater then 0");
 
 				return SF.IfStatement(
-						SF.BinaryExpression(SyntaxKind.GreaterThanExpression,
+						SF.BinaryExpression(SyntaxKind.LessThanOrEqualExpression,
 							Extensions.MemberAccess(
 								SF.IdentifierName(data),
 								SF.IdentifierName(requiredInfo.Name)
@@ -437,6 +437,76 @@ namespace Sannel.House.Generator.Generators
 					)
 				)
 				);
+
+			foreach(var prop in props)
+			{
+				if (!prop.ShouldIgnore() && !prop.IsKey())
+				{
+					var genAtt = prop.GetGenerationAttribute();
+					if (genAtt != null)
+					{
+						if (genAtt.IsNow)
+						{
+							if(prop.PropertyType == typeof(DateTime))
+							{
+								blocks = blocks.AddStatements(
+									SF.ExpressionStatement(
+										SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+											Extensions.MemberAccess(
+												SF.IdentifierName(data),
+												SF.IdentifierName(prop.Name)
+											),
+											Extensions.MemberAccess(
+												SF.IdentifierName("DateTime"),
+												SF.IdentifierName("Now")
+											)
+										)
+									)
+								);
+							}
+							if(prop.PropertyType == typeof(DateTimeOffset))
+							{
+								blocks = blocks.AddStatements(
+									SF.ExpressionStatement(
+										SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+											Extensions.MemberAccess(
+												SF.IdentifierName(data),
+												SF.IdentifierName(prop.Name)
+											),
+											Extensions.MemberAccess(
+												SF.IdentifierName("DateTimeOffset"),
+												SF.IdentifierName("Now")
+											)
+										)
+									)
+								);
+							}
+						}
+						if (genAtt.ShouldBeCount)
+						{
+							blocks = blocks.AddStatements(
+								SF.ExpressionStatement(
+									SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+										Extensions.MemberAccess(
+											SF.IdentifierName(data),
+											SF.IdentifierName(prop.Name)
+										),
+										SF.InvocationExpression(
+											Extensions.MemberAccess(
+												Extensions.MemberAccess(
+													SF.IdentifierName(context),
+													SF.IdentifierName(propertyName)
+												),
+												SF.IdentifierName("Count")
+											)
+										).AddArgumentListArguments()
+									)
+								)
+							);
+						}
+					}
+				}
+			}
 
 			blocks = blocks.AddStatements(
 				SF.ExpressionStatement(
