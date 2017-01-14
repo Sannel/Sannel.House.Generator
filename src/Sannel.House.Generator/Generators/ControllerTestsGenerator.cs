@@ -217,6 +217,22 @@ namespace Sannel.House.Generator.Generators
 			return blocks;
 		}
 
+		private StatementSyntax[] generateSeedObject(String variableName, PropertyInfo[] props, String ignorePropertyName)
+		{
+			var rand = new Random();
+			List<ExpressionStatementSyntax> statements = new List<ExpressionStatementSyntax>();
+
+			foreach (var p in props)
+			{
+				if (!p.ShouldIgnore() && String.Compare(p.Name, ignorePropertyName, true) != 0)
+				{
+					statements.Add(SF.ExpressionStatement(Extensions.SetPropertyValue(SF.IdentifierName(variableName), p.Name, rand.LiteralForProperty(p.PropertyType, p.Name))));
+				}
+			}
+
+			return statements.ToArray();
+		}
+
 		private MethodDeclarationSyntax generateGetTest(String controllerName, String propertyName, Type t)
 		{
 			var method = SF.MethodDeclaration(SF.ParseTypeName("void"), "GetTest")
@@ -420,15 +436,174 @@ namespace Sannel.House.Generator.Generators
 			return method;
 		}
 
+		private StatementSyntax[] generatePostCommonAssert(SyntaxToken result, String message, int errorCount = 1)
+		{
+			List<StatementSyntax> statements = new List<StatementSyntax>();
+			statements.Add(SF.ExpressionStatement(
+					TestBuilder.AssertIsNotNull(SF.IdentifierName(result))
+				));
+			statements.Add(
+					SF.ExpressionStatement(
+						TestBuilder.AssertIsFalse(
+							Extensions.MemberAccess(
+								SF.IdentifierName(result),
+								SF.IdentifierName("Success")
+							)
+						)
+					)
+				);
+			statements.Add(
+					SF.ExpressionStatement(
+						TestBuilder.AssertAreEqual(
+							errorCount.ToLiteral(),
+							result.Text.MemberAccess(
+								"Errors",
+								"Count"
+							)
+						)
+					)
+				);
+			statements.Add(
+					SF.ExpressionStatement(
+						TestBuilder.AssertAreEqual(
+							message.ToLiteral(),
+							SF.ElementAccessExpression(
+								Extensions.MemberAccess(
+									SF.IdentifierName(result),
+									SF.IdentifierName("Errors")
+								)
+							).AddArgumentListArguments(
+								SF.Argument(0.ToLiteral())
+							)
+						)
+					)
+				);
+			statements.Add(
+					SF.ExpressionStatement(
+						TestBuilder.AssertIsNull(
+							Extensions.MemberAccess(
+								SF.IdentifierName(result),
+								SF.IdentifierName("Data")
+							)
+						)
+					)
+				);
+			return statements.ToArray();
+		}
+
 		private MethodDeclarationSyntax generatePostTest(String controllerName, String propertyName, Type t)
 		{
 			var wrapper = SF.Identifier("wrapper");
 			var context = SF.Identifier("context");
 			var controller = SF.Identifier("controller");
+			var result = SF.Identifier("result");
 			var method = SF.MethodDeclaration(SF.ParseTypeName("void"), "GetWithIdTest")
 				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword));
 
 			var blocks = SF.Block();
+			blocks = blocks.AddStatements(
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						result.Text,
+						SF.EqualsValueClause(
+							SF.InvocationExpression(
+								Extensions.MemberAccess(
+									controller.Text,
+									"Post"
+								)
+							).AddArgumentListArguments(
+								SF.Argument(SF.LiteralExpression(SyntaxKind.NullLiteralExpression))
+							)
+						)
+					)
+				)
+			);
+
+			blocks = blocks.AddStatements(
+				generatePostCommonAssert(result, "data cannot be null")
+				);
+
+			var expected = "expected";
+
+			blocks = blocks.AddStatements(
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(expected, 
+						SF.EqualsValueClause(
+							SF.ObjectCreationExpression(SF.ParseTypeName(t.Name))
+							.AddArgumentListArguments()
+						)
+					)
+				)
+			);
+
+			var props = t.GetProperties();
+
+			foreach(var prop in props)
+			{
+				var genArg = prop.GetGenerationAttribute();
+				if (genArg != null && !genArg.Ignore)
+				{
+
+					if (genArg.CheckForEmptyString)
+					{
+						blocks = blocks.AddStatements(
+							generateSeedObject(expected, props, prop.Name)
+						);
+
+						blocks = blocks.AddStatements(
+							SF.ExpressionStatement(
+								SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+									expected.MemberAccess(prop.Name),
+									"".ToLiteral()
+								)
+							),
+							SF.ExpressionStatement(
+								SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+									SF.IdentifierName(result),
+									SF.InvocationExpression(
+										SF.IdentifierName(controller).MemberAccess(SF.IdentifierName("Post"))
+									).AddArgumentListArguments(
+										SF.Argument(SF.IdentifierName(expected))
+									)
+								)
+							)
+						);
+						blocks = blocks.AddStatements(
+							generatePostCommonAssert(result, $"{prop.Name} must have a non empty value")
+							);
+					}
+					if (genArg.IsRequired)
+					{
+						blocks = blocks.AddStatements(
+							generateSeedObject(expected, props, prop.Name)
+						);
+
+						blocks = blocks.AddStatements(
+							SF.ExpressionStatement(
+								SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+									expected.MemberAccess(prop.Name),
+									SF.LiteralExpression(SyntaxKind.NullLiteralExpression)
+								)
+							),
+							SF.ExpressionStatement(
+								SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+									SF.IdentifierName(result),
+									SF.InvocationExpression(
+										SF.IdentifierName(controller).MemberAccess(SF.IdentifierName("Post"))
+									).AddArgumentListArguments(
+										SF.Argument(SF.IdentifierName(expected))
+									)
+								)
+							)
+						);
+						blocks = blocks.AddStatements(
+							generatePostCommonAssert(result, $"{prop.Name} must not be null")
+							);
+
+					}
+				}
+			}
+
 
 			method = method.AddBodyStatements(wrapBlocks(blocks, controllerName));
 

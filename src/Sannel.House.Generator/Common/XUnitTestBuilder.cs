@@ -59,12 +59,21 @@ namespace Sannel.House.Generator.Common
 
 		public ExpressionSyntax AssertIsFalse(ExpressionSyntax expression)
 		{
-			throw new NotImplementedException();
+			return InvocationExpression(
+				Extensions.MemberAccess("Assert", "False")
+			).AddArgumentListArguments(
+				Argument(expression)
+			);
 		}
 
 		public ExpressionSyntax AssertIsFalse(ExpressionSyntax expression, string message)
 		{
-			throw new NotImplementedException();
+			return InvocationExpression(
+				Extensions.MemberAccess("Assert", "False")
+			).AddArgumentListArguments(
+				Argument(expression),
+				Argument(message.ToLiteral())
+			);
 		}
 
 		public ExpressionSyntax AssertIsNotNull(ExpressionSyntax expression)

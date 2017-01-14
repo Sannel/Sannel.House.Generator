@@ -385,7 +385,28 @@ namespace Sannel.House.Generator
 			return MemberAccess(SF.IdentifierName(name), SF.IdentifierName(property));
 		}
 
-		public static MemberAccessExpressionSyntax MemberAccess(ExpressionSyntax left, SimpleNameSyntax right)
+		public static MemberAccessExpressionSyntax MemberAccess(this String left, String right, params String[] moreRight)
+		{
+			return SF.IdentifierName(left).MemberAccess(SF.IdentifierName(right),
+				moreRight?.Select(i => SF.IdentifierName(i))?.ToArray()
+				);
+		}
+		
+		public static MemberAccessExpressionSyntax MemberAccess(this ExpressionSyntax left, SimpleNameSyntax right, params SimpleNameSyntax[] moreRight)
+		{
+			var root = MemberAccess(left, right);
+			if(moreRight != null)
+			{
+				foreach(var item in moreRight)
+				{
+					root = MemberAccess(root, item);
+				}
+			}
+
+			return root;
+		}
+
+		public static MemberAccessExpressionSyntax MemberAccess(this ExpressionSyntax left, SimpleNameSyntax right)
 		{
 			return SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, left, right);
 		}
