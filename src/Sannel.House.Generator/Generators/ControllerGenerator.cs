@@ -123,9 +123,9 @@ namespace Sannel.House.Generator.Generators
 
 		private IfStatementSyntax postEmptyStringIfStatment(SyntaxToken data, SyntaxToken result, PropertyInfo info)
 		{
-				StringToken token = $"nameof({data.Text}.{info.Name})";
-				token = token.AsInterpolation();
-				var istring = token.ToInterpolatedString(" must have a non empty value");
+			StringToken token = $"nameof({data.Text}.{info.Name})";
+			token = token.AsInterpolation();
+			var istring = token.ToInterpolatedString(" must have a non empty value");
 
 			return SF.IfStatement(
 				SF.InvocationExpression(
@@ -165,76 +165,76 @@ namespace Sannel.House.Generator.Generators
 		private IfStatementSyntax postGreaterThenZeroStatment(SyntaxToken data, SyntaxToken result, PropertyInfo requiredInfo)
 		{
 			var type = requiredInfo.PropertyType;
-				StringToken token = $"nameof({data.Text}.{requiredInfo.Name})";
-				token = token.AsInterpolation();
-				var istring = token.ToInterpolatedString(" must be greater then 0");
+			StringToken token = $"nameof({data.Text}.{requiredInfo.Name})";
+			token = token.AsInterpolation();
+			var istring = token.ToInterpolatedString(" must be greater then 0");
 
-				return SF.IfStatement(
-						SF.BinaryExpression(SyntaxKind.LessThanOrEqualExpression,
+			return SF.IfStatement(
+					SF.BinaryExpression(SyntaxKind.LessThanOrEqualExpression,
+						Extensions.MemberAccess(
+							SF.IdentifierName(data),
+							SF.IdentifierName(requiredInfo.Name)
+						),
+						0.ToLiteral()
+					),
+					SF.Block().AddStatements(
+					SF.ExpressionStatement(
+						SF.InvocationExpression(
 							Extensions.MemberAccess(
-								SF.IdentifierName(data),
-								SF.IdentifierName(requiredInfo.Name)
-							),
-							0.ToLiteral()
-						),
-						SF.Block().AddStatements(
-						SF.ExpressionStatement(
-							SF.InvocationExpression(
 								Extensions.MemberAccess(
-									Extensions.MemberAccess(
-										SF.IdentifierName(result),
-										SF.IdentifierName("Errors")
-									),
-									SF.IdentifierName("Add")
-								)
+									SF.IdentifierName(result),
+									SF.IdentifierName("Errors")
+								),
+								SF.IdentifierName("Add")
 							)
-							.AddArgumentListArguments(
-								SF.Argument(istring)
-							)
-						),
-						SF.ReturnStatement(
-							SF.IdentifierName(result)
 						)
+						.AddArgumentListArguments(
+							SF.Argument(istring)
+						)
+					),
+					SF.ReturnStatement(
+						SF.IdentifierName(result)
 					)
-					);
+				)
+				);
 
 		}
 
 		private IfStatementSyntax postRequiredIfStatment(SyntaxToken data, SyntaxToken result, PropertyInfo requiredInfo)
 		{
 			var type = requiredInfo.PropertyType;
-				StringToken token = $"nameof({data.Text}.{requiredInfo.Name})";
-				token = token.AsInterpolation();
-				var istring = token.ToInterpolatedString(" must not be null");
+			StringToken token = $"nameof({data.Text}.{requiredInfo.Name})";
+			token = token.AsInterpolation();
+			var istring = token.ToInterpolatedString(" must not be null");
 
-				return SF.IfStatement(
-						SF.BinaryExpression(SyntaxKind.EqualsExpression,
+			return SF.IfStatement(
+					SF.BinaryExpression(SyntaxKind.EqualsExpression,
+						Extensions.MemberAccess(
+							SF.IdentifierName(data),
+							SF.IdentifierName(requiredInfo.Name)
+						),
+						SF.LiteralExpression(SyntaxKind.NullLiteralExpression)
+					),
+					SF.Block().AddStatements(
+					SF.ExpressionStatement(
+						SF.InvocationExpression(
 							Extensions.MemberAccess(
-								SF.IdentifierName(data),
-								SF.IdentifierName(requiredInfo.Name)
-							),
-							SF.LiteralExpression(SyntaxKind.NullLiteralExpression)
-						),
-						SF.Block().AddStatements(
-						SF.ExpressionStatement(
-							SF.InvocationExpression(
 								Extensions.MemberAccess(
-									Extensions.MemberAccess(
-										SF.IdentifierName(result),
-										SF.IdentifierName("Errors")
-									),
-									SF.IdentifierName("Add")
-								)
+									SF.IdentifierName(result),
+									SF.IdentifierName("Errors")
+								),
+								SF.IdentifierName("Add")
 							)
-							.AddArgumentListArguments(
-								SF.Argument(istring)
-							)
-						),
-						SF.ReturnStatement(
-							SF.IdentifierName(result)
 						)
+						.AddArgumentListArguments(
+							SF.Argument(istring)
+						)
+					),
+					SF.ReturnStatement(
+						SF.IdentifierName(result)
 					)
-					);
+				)
+				);
 		}
 
 		private MethodDeclarationSyntax generatePostMethod(String propertyName, Type t)
@@ -356,7 +356,7 @@ namespace Sannel.House.Generator.Generators
 
 			var keyType = SF.ParseTypeName(key.PropertyType.Name);
 			ExpressionSyntax defaultValue = keyType.GetDefaultValue();
-			if(key.PropertyType == typeof(Guid))
+			if (key.PropertyType == typeof(Guid))
 			{
 				Random rand = new Random();
 				defaultValue = rand.LiteralForProperty(key.PropertyType, key.Name);
@@ -374,7 +374,7 @@ namespace Sannel.House.Generator.Generators
 				)
 				);
 
-			foreach(var prop in props)
+			foreach (var prop in props)
 			{
 				if (!prop.ShouldIgnore() && !prop.IsKey())
 				{
@@ -400,7 +400,7 @@ namespace Sannel.House.Generator.Generators
 						if (genAtt.GreaterThenZero)
 						{
 							var @if = postGreaterThenZeroStatment(data, result, prop);
-							if(@if != null)
+							if (@if != null)
 							{
 								blocks = blocks.AddStatements(@if);
 							}
@@ -438,7 +438,7 @@ namespace Sannel.House.Generator.Generators
 				)
 				);
 
-			foreach(var prop in props)
+			foreach (var prop in props)
 			{
 				if (!prop.ShouldIgnore() && !prop.IsKey())
 				{
@@ -447,7 +447,7 @@ namespace Sannel.House.Generator.Generators
 					{
 						if (genAtt.IsNow)
 						{
-							if(prop.PropertyType == typeof(DateTime))
+							if (prop.PropertyType == typeof(DateTime))
 							{
 								blocks = blocks.AddStatements(
 									SF.ExpressionStatement(
@@ -464,7 +464,7 @@ namespace Sannel.House.Generator.Generators
 									)
 								);
 							}
-							if(prop.PropertyType == typeof(DateTimeOffset))
+							if (prop.PropertyType == typeof(DateTimeOffset))
 							{
 								blocks = blocks.AddStatements(
 									SF.ExpressionStatement(
@@ -553,6 +553,22 @@ namespace Sannel.House.Generator.Generators
 							ex
 						)
 					).AddBlockStatements(
+						SF.IfStatement(
+							SF.InvocationExpression(
+								"logger".MemberAccess("IsEnabled")
+							).AddArgumentListArguments(
+								SF.Argument("LogLevel".MemberAccess("Error"))
+							),
+							SF.ExpressionStatement(
+								SF.InvocationExpression(
+									"logger".MemberAccess("LogError")
+								).AddArgumentListArguments(
+									SF.Argument("LoggingIds".MemberAccess("PostException")),
+									SF.Argument(SF.IdentifierName(ex)),
+									SF.Argument($"Error during {t.Name} Post".ToLiteral())
+								)
+							)
+						),
 						SF.ExpressionStatement(
 							SF.InvocationExpression(
 								Extensions.MemberAccess(
@@ -608,8 +624,11 @@ namespace Sannel.House.Generator.Generators
 			unit = unit.AddUsings(SF.UsingDirective(SF.IdentifierName("System.Linq")));
 			unit = unit.AddUsings(SF.UsingDirective(SF.IdentifierName("System.Threading.Tasks")));
 			unit = unit.AddUsings(SF.UsingDirective(SF.IdentifierName("Microsoft.AspNetCore.Mvc")));
+			unit = unit.AddUsings(SF.UsingDirective(SF.IdentifierName("Sannel.House.Web.Base")));
 			unit = unit.AddUsings(SF.UsingDirective(SF.IdentifierName("Sannel.House.Web.Base.Models")));
 			unit = unit.AddUsings(SF.UsingDirective(SF.IdentifierName("Sannel.House.Web.Base.Interfaces")));
+			unit = unit.AddUsing("Microsoft.Extensions.Logging");
+
 
 			var ti = t.GetTypeInfo();
 			var ga = ti.GetCustomAttribute<GenerationAttribute>() ?? new GenerationAttribute();

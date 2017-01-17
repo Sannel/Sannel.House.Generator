@@ -123,7 +123,12 @@ namespace Sannel.House.Generator.Common
 
 		public ExpressionSyntax AssertIsTrue(ExpressionSyntax expression, string message)
 		{
-			return AssertIsTrue(expression);
+			return InvocationExpression(
+					Extensions.MemberAccess("Assert", "True")
+				).AddArgumentListArguments(
+					Argument(expression),
+					Argument(message.ToLiteral())
+				);
 		}
 
 		public AttributeSyntax GetClassAttribute()

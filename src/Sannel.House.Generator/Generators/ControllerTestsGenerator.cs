@@ -217,10 +217,20 @@ namespace Sannel.House.Generator.Generators
 			return blocks;
 		}
 
-		private StatementSyntax[] generateSeedObject(String variableName, PropertyInfo[] props, String ignorePropertyName)
+		private StatementSyntax[] generateSeedObject(String variableName, String typeName, PropertyInfo[] props, String ignorePropertyName)
 		{
 			var rand = new Random();
 			List<ExpressionStatementSyntax> statements = new List<ExpressionStatementSyntax>();
+
+			statements.Add(
+				SF.ExpressionStatement(
+					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+						SF.IdentifierName(variableName),
+						SF.ObjectCreationExpression(SF.ParseTypeName(typeName))
+						.AddArgumentListArguments()
+					)
+				).WithLeadingTrivia(SF.Comment($"// {ignorePropertyName} test"))
+				);
 
 			foreach (var p in props)
 			{
@@ -497,8 +507,9 @@ namespace Sannel.House.Generator.Generators
 			var context = SF.Identifier("context");
 			var controller = SF.Identifier("controller");
 			var result = SF.Identifier("result");
-			var method = SF.MethodDeclaration(SF.ParseTypeName("void"), "GetWithIdTest")
-				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword));
+			var method = SF.MethodDeclaration(SF.ParseTypeName("void"), "PostTest")
+				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword))
+				.AddAttributeLists(SF.AttributeList().AddAttributes(TestBuilder.GetMethodAttribute()));
 
 			var blocks = SF.Block();
 			blocks = blocks.AddStatements(
@@ -537,6 +548,7 @@ namespace Sannel.House.Generator.Generators
 			);
 
 			var props = t.GetProperties();
+			var key = props.GetKeyProperty();
 
 			foreach(var prop in props)
 			{
@@ -547,7 +559,7 @@ namespace Sannel.House.Generator.Generators
 					if (genArg.CheckForEmptyString)
 					{
 						blocks = blocks.AddStatements(
-							generateSeedObject(expected, props, prop.Name)
+							generateSeedObject(expected, t.Name, props, prop.Name)
 						);
 
 						blocks = blocks.AddStatements(
@@ -575,7 +587,7 @@ namespace Sannel.House.Generator.Generators
 					if (genArg.IsRequired)
 					{
 						blocks = blocks.AddStatements(
-							generateSeedObject(expected, props, prop.Name)
+							generateSeedObject(expected, t.Name, props, prop.Name)
 						);
 
 						blocks = blocks.AddStatements(
@@ -604,6 +616,133 @@ namespace Sannel.House.Generator.Generators
 				}
 			}
 
+			blocks = blocks.AddStatements(
+				generateSeedObject(expected, t.Name, props, "Success Test")
+			);
+
+			blocks = blocks.AddStatements(
+				SF.ExpressionStatement(
+					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+						SF.IdentifierName(result),
+						SF.InvocationExpression(
+							SF.IdentifierName(controller).MemberAccess(SF.IdentifierName("Post"))
+						).AddArgumentListArguments(
+							SF.Argument(SF.IdentifierName(expected))
+						)
+					)
+				),
+				SF.ExpressionStatement(
+					TestBuilder.AssertIsNotNull(SF.IdentifierName(result))
+				),
+				SF.ExpressionStatement(
+					TestBuilder.AssertIsTrue(result.Text.MemberAccess("Success"), "Success was not true")
+				),
+				SF.ExpressionStatement(
+					TestBuilder.AssertAreEqual(
+						0.ToLiteral(),
+						result.Text.MemberAccess("Errors", "Count")
+					)
+				),
+				SF.ExpressionStatement(
+					TestBuilder.AssertIsNotNull(result.Text.MemberAccess("Data"))
+				)
+			);
+
+			if (key.PropertyType == typeof(Int32) || key.PropertyType == typeof(Int64) || key.PropertyType == typeof(Int32))
+			{
+				blocks = blocks.AddStatements(
+					SF.ExpressionStatement(
+						TestBuilder.AssertIsTrue(
+							SF.BinaryExpression(SyntaxKind.GreaterThanExpression,
+								result.Text.MemberAccess("Data", key.Name),
+								0.ToLiteral()
+							),
+							$"{key.Name} not updated"
+						)
+					)
+				);
+			}
+			else if (key.PropertyType == typeof(Guid))
+			{
+				blocks = blocks.AddStatements(
+					SF.ExpressionStatement(
+						TestBuilder.AssertIsTrue(
+							SF.BinaryExpression(SyntaxKind.NotEqualsExpression,
+								result.Text.MemberAccess("Data", key.Name),
+								SF.InvocationExpression(
+									"Guid".MemberAccess("NewGuid")
+								).AddArgumentListArguments()
+							)
+						)
+					)
+				);
+			}
+			else
+			{
+				var list = blocks.Statements;
+				var existing = list.Last();
+				list = list.Replace(
+					existing,
+					existing.WithTrailingTrivia(SF.Comment($"// the key type {key.PropertyType} is not supported right now"))
+					);
+
+				blocks = blocks.WithStatements(
+					list
+				);
+			}
+
+			var resultData = SF.Identifier("resultData");
+			var first = SF.Identifier("first");
+
+			blocks = blocks.AddStatements(
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						first.Text,
+						SF.EqualsValueClause(
+							SF.InvocationExpression(
+								context.Text.MemberAccess("Devices", "FirstOrDefault")
+							).AddArgumentListArguments(
+								SF.Argument(
+									SF.ParenthesizedLambdaExpression(
+										SF.BinaryExpression(SyntaxKind.EqualsExpression,
+											"i".MemberAccess(key.Name),
+											result.Text.MemberAccess("Data", key.Name)
+										)
+									).AddParameterListParameters(
+										SF.Parameter(SF.Identifier("i"))
+									)
+								)
+							)
+						)
+					)
+				),
+				SF.ExpressionStatement(
+					TestBuilder.AssertIsNotNull(SF.IdentifierName(first), "first was not set")
+				),
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						resultData.Text,
+						SF.EqualsValueClause(
+							result.Text.MemberAccess("Data")
+						)
+					)
+				)
+			);
+
+			foreach(var prop in props)
+			{
+				if (!prop.ShouldIgnore())
+				{
+					blocks = blocks.AddStatements(
+						SF.ExpressionStatement(
+							TestBuilder.AssertAreEqual(
+								first.Text.MemberAccess(prop.Name),
+								resultData.Text.MemberAccess(prop.Name)
+							)
+						)
+					);
+				}
+			}
 
 			method = method.AddBodyStatements(wrapBlocks(blocks, controllerName));
 
