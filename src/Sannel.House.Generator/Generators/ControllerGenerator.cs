@@ -614,6 +614,380 @@ namespace Sannel.House.Generator.Generators
 			return method;
 		}
 
+
+		private MethodDeclarationSyntax generatePutMethod(String propertyName, Type t)
+		{
+			var props = t.GetProperties();
+			var data = SF.Identifier("data");
+			var result = SF.Identifier("result");
+
+			var key = props.GetKeyProperty();
+			if (key == null)
+			{
+				return null;
+			}
+
+			var method = SF.MethodDeclaration(SF.GenericName("Result")
+					.AddTypeArgumentListArguments(SF.ParseTypeName(t.Name))
+					, "Put")
+				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword))
+				.AddParameterListParameters(
+					SF.Parameter(data)
+						.WithType(SF.ParseTypeName(t.Name))
+						.AddAttributeLists(
+							SF.AttributeList()
+							.AddAttributes(SF.Attribute(SF.IdentifierName("FromBody")))
+						)
+				)
+				.WithAttributeLists(
+					new SyntaxList<AttributeListSyntax>().Add(
+						SF.AttributeList().AddAttributes(
+							SF.Attribute(SF.IdentifierName("HttpPut"))
+						)
+					)
+				);
+
+			var blocks = SF.Block();
+			/*var result = new Result<Device>();
+			result.Data = device;
+			result.Success = false;*/
+			blocks = blocks.AddStatements(
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(result.Text,
+						SF.EqualsValueClause(
+							SF.ObjectCreationExpression(SF.GenericName("Result").AddTypeArgumentListArguments(
+									SF.ParseTypeName(t.Name)
+							)).AddArgumentListArguments()
+						)
+					)
+				),
+				SF.ExpressionStatement(
+					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+						Extensions.MemberAccess(
+							result.Text,
+							"Data"
+						),
+						SF.IdentifierName(data)
+					)
+				),
+				SF.ExpressionStatement(
+					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+						Extensions.MemberAccess(
+							result.Text,
+							"Success"
+						),
+						false.ToLiteral()
+					)
+				)
+				);
+
+			/*if (device == null)
+			{
+				result.Errors.Add($"{nameof(device)} cannot be null");
+				return result;
+			}*/
+			blocks = blocks.AddStatements(
+				SF.IfStatement(
+	SF.BinaryExpression(
+		SyntaxKind.EqualsExpression,
+		SF.IdentifierName("data"),
+		SF.LiteralExpression(
+			SyntaxKind.NullLiteralExpression)),
+   SF.Block(
+		SF.ExpressionStatement(
+			SF.InvocationExpression(
+				SF.MemberAccessExpression(
+					SyntaxKind.SimpleMemberAccessExpression,
+					SF.MemberAccessExpression(
+						SyntaxKind.SimpleMemberAccessExpression,
+						SF.IdentifierName("result"),
+						SF.IdentifierName("Errors")),
+					SF.IdentifierName("Add")))
+			.WithArgumentList(
+				SF.ArgumentList(
+					SF.SingletonSeparatedList<ArgumentSyntax>(
+						SF.Argument(
+							SF.InterpolatedStringExpression(
+								SF.Token(SyntaxKind.InterpolatedStringStartToken))
+							.WithContents(
+								SF.List<InterpolatedStringContentSyntax>(
+									new InterpolatedStringContentSyntax[]{
+										SF.Interpolation(
+											SF.InvocationExpression(
+												SF.IdentifierName("nameof"))
+											.WithArgumentList(
+												SF.ArgumentList(
+													SF.SingletonSeparatedList<ArgumentSyntax>(
+													   SF.Argument(
+															SF.IdentifierName("data")))))),
+										SF.InterpolatedStringText()
+										.WithTextToken(
+											SF.Token(
+												SF.TriviaList(),
+												SyntaxKind.InterpolatedStringTextToken,
+												" cannot be null",
+												" cannot be null",
+												SF.TriviaList()))}))))))),
+		SF.ReturnStatement(
+			SF.IdentifierName("result"))))
+				);
+
+			var keyType = SF.ParseTypeName(key.PropertyType.Name);
+			ExpressionSyntax defaultValue = keyType.GetDefaultValue();
+			if (key.PropertyType == typeof(Guid))
+			{
+				Random rand = new Random();
+				defaultValue = rand.LiteralForProperty(key.PropertyType, key.Name);
+			}
+
+			blocks = blocks.AddStatements(
+				SF.ExpressionStatement(
+				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					Extensions.MemberAccess(
+						SF.IdentifierName(data),
+						SF.IdentifierName(key.Name)
+					),
+					defaultValue
+				)
+				)
+				);
+
+			foreach (var prop in props)
+			{
+				if (!prop.ShouldIgnore() && !prop.IsKey())
+				{
+					var genAtt = prop.GetGenerationAttribute();
+					if (genAtt != null)
+					{
+						if (genAtt.IsRequired)
+						{
+							var @if = postRequiredIfStatment(data, result, prop);
+							if (@if != null)
+							{
+								blocks = blocks.AddStatements(@if);
+							}
+						}
+						if (genAtt.CheckForEmptyString)
+						{
+							var @if = postEmptyStringIfStatment(data, result, prop);
+							if (@if != null)
+							{
+								blocks = blocks.AddStatements(@if);
+							}
+						}
+						if (genAtt.GreaterThenZero)
+						{
+							var @if = postGreaterThenZeroStatment(data, result, prop);
+							if (@if != null)
+							{
+								blocks = blocks.AddStatements(@if);
+							}
+						}
+					}
+				}
+			}
+
+			blocks = blocks.AddStatements(
+				SF.ExpressionStatement(
+					SF.InvocationExpression(
+						SF.IdentifierName("putExtraVerification")
+					).AddArgumentListArguments(
+						SF.Argument(SF.IdentifierName(data)),
+						SF.Argument(SF.IdentifierName(result))
+					)
+				),
+				SF.IfStatement(
+					SF.BinaryExpression(SyntaxKind.GreaterThanExpression,
+						Extensions.MemberAccess(
+							Extensions.MemberAccess(
+								SF.IdentifierName(result),
+								SF.IdentifierName("Errors")
+							),
+							SF.IdentifierName("Count")
+						)
+						,
+						0.ToLiteral()
+					),
+					SF.Block().AddStatements(
+						SF.ReturnStatement(
+							SF.IdentifierName(result)
+						)
+					)
+				)
+				);
+
+			var current = SF.Identifier("current");
+			blocks = blocks.AddStatements(
+				SF.ExpressionStatement(
+					SF.InvocationExpression(
+						SF.IdentifierName("putExtraReset")
+					).AddArgumentListArguments(
+						SF.Argument(SF.IdentifierName(data))
+					)
+				),
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						current.Text,
+						SF.EqualsValueClause(
+							SF.InvocationExpression(
+								context.Text.MemberAccess(propertyName, "FirstOrDefault")
+							)
+							.AddArgumentListArguments(
+								SF.Argument(
+									SF.ParenthesizedLambdaExpression(
+										SF.BinaryExpression(SyntaxKind.EqualsExpression,
+											"i".MemberAccess(key.Name),
+											data.Text.MemberAccess("Id")
+										)
+									).AddParameterListParameters(
+										SF.Parameter(SF.Identifier("i"))
+									)
+								)
+							)
+						)
+					)
+				),
+				SF.IfStatement(
+					SF.BinaryExpression(SyntaxKind.EqualsExpression,
+						SF.IdentifierName(current),
+						SF.LiteralExpression(SyntaxKind.NullLiteralExpression)
+					),
+					SF.Block().AddStatements(
+						SF.ExpressionStatement(
+							SF.InvocationExpression(
+								result.Text.MemberAccess("Errors", "Add")
+							).AddArgumentListArguments(
+								SF.Argument(
+								((StringToken)t.Name).ToInterpolatedString(
+									$" with {key.Name} ",
+									((StringToken)$"data.{key.Name}").AsInterpolation(),
+									" was not found")
+								)
+							)
+						),
+						SF.ReturnStatement(
+							SF.IdentifierName(result)
+						)
+					)
+				)
+			);
+
+
+			foreach(var prop in props)
+			{
+				if(!prop.ShouldIgnore() && prop.Name != key.Name)
+				{
+					if(!prop.CantUpdate())
+					{
+						blocks = blocks.AddStatements(
+							SF.ExpressionStatement(
+								SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+									current.Text.MemberAccess(prop.Name),
+									data.Text.MemberAccess(prop.Name)
+								)
+							)
+						);
+					}
+				}
+			}
+
+			/*
+			var current = context.Devices.FirstOrDefault(i => i.Id == data.Id);
+			if(current == null)
+			{
+				result.Errors.Add($"{Device} with {keyname} {id} was not found");
+				return result;
+			}
+			
+			current... = data...
+			*/
+
+			var ex = SF.Identifier("ex");
+
+			blocks = blocks.AddStatements(
+				SF.TryStatement()
+				.AddBlockStatements(
+					SF.ExpressionStatement(
+						SF.InvocationExpression(
+							Extensions.MemberAccess(
+								SF.IdentifierName(context),
+								SF.IdentifierName("SaveChanges")
+							)
+						).AddArgumentListArguments()
+					)
+				)
+				.AddCatches(
+					SF.CatchClause()
+					.WithDeclaration(
+						SF.CatchDeclaration(
+							SF.ParseTypeName("Exception"),
+							ex
+						)
+					).AddBlockStatements(
+						SF.IfStatement(
+							SF.InvocationExpression(
+								"logger".MemberAccess("IsEnabled")
+							).AddArgumentListArguments(
+								SF.Argument("LogLevel".MemberAccess("Error"))
+							),
+							SF.Block().
+							AddStatements(
+								SF.ExpressionStatement(
+									SF.InvocationExpression(
+										"logger".MemberAccess("LogError")
+									).AddArgumentListArguments(
+										SF.Argument("LoggingIds".MemberAccess("PutException")),
+										SF.Argument(SF.IdentifierName(ex)),
+										SF.Argument($"Error during {t.Name} Put".ToLiteral())
+									)
+								)
+							)
+						),
+						SF.ExpressionStatement(
+							SF.InvocationExpression(
+								Extensions.MemberAccess(
+									Extensions.MemberAccess(
+										SF.IdentifierName(result),
+										SF.IdentifierName("Errors")
+									),
+									SF.IdentifierName("Add")
+								)
+							).AddArgumentListArguments(
+								SF.Argument(
+									Extensions.MemberAccess(
+										SF.IdentifierName(ex),
+										SF.IdentifierName("Message")
+									)
+								)
+							)
+						),
+						SF.ReturnStatement(
+							SF.IdentifierName(result)
+						)
+					)
+				)
+			);
+
+			blocks = blocks.AddStatements(
+				SF.ExpressionStatement(
+					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+						Extensions.MemberAccess(
+							SF.IdentifierName(result),
+							SF.IdentifierName("Success")
+						),
+						true.ToLiteral()
+					)
+				),
+				SF.ReturnStatement(
+					SF.IdentifierName(result)
+				)
+			);
+
+			method = method.WithBody(blocks);
+
+			return method;
+		}
+
 		protected override CompilationUnitSyntax internalGenerate(string propertyName, Type t)
 		{
 			var fileName = $"{t.Name}Controller";
@@ -681,6 +1055,35 @@ namespace Sannel.House.Generator.Generators
 					);
 					@class = @class.AddMembers(SF.MethodDeclaration(SF.ParseTypeName("void"),
 						"postExtraReset")
+						.AddModifiers(SF.Token(SyntaxKind.PartialKeyword))
+						.AddParameterListParameters(
+							SF.Parameter(SF.Identifier("data")).WithType(SF.ParseTypeName(t.Name))
+						).WithSemicolonToken(SF.Token(SyntaxKind.SemicolonToken))
+					);
+				}
+			}
+
+			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Put))
+			{
+				var put = generatePutMethod(propertyName, t);
+				if (put != null)
+				{
+					@class = @class.AddMembers(put);
+					@class = @class.AddMembers(SF.MethodDeclaration(SF.ParseTypeName("void"),
+						"putExtraVerification")
+						.AddModifiers(SF.Token(SyntaxKind.PartialKeyword))
+						.AddParameterListParameters(
+							SF.Parameter(SF.Identifier("data")).WithType(SF.ParseTypeName(t.Name)),
+							SF.Parameter(SF.Identifier("result")).WithType(
+								SF.GenericName("Result")
+								.AddTypeArgumentListArguments(
+									SF.ParseTypeName(t.Name)
+								)
+							)
+						).WithSemicolonToken(SF.Token(SyntaxKind.SemicolonToken))
+					);
+					@class = @class.AddMembers(SF.MethodDeclaration(SF.ParseTypeName("void"),
+						"putExtraReset")
 						.AddModifiers(SF.Token(SyntaxKind.PartialKeyword))
 						.AddParameterListParameters(
 							SF.Parameter(SF.Identifier("data")).WithType(SF.ParseTypeName(t.Name))
