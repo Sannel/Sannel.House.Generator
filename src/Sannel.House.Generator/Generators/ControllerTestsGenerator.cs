@@ -446,7 +446,7 @@ namespace Sannel.House.Generator.Generators
 			return method;
 		}
 
-		private StatementSyntax[] generatePostCommonAssert(SyntaxToken result, String message, int errorCount = 1)
+		private StatementSyntax[] generatePostCommonAssert(SyntaxToken result, String message, int errorCount = 1, bool shouldBeNull=false)
 		{
 			List<StatementSyntax> statements = new List<StatementSyntax>();
 			statements.Add(SF.ExpressionStatement(
@@ -488,16 +488,32 @@ namespace Sannel.House.Generator.Generators
 						)
 					)
 				);
-			statements.Add(
-					SF.ExpressionStatement(
-						TestBuilder.AssertIsNull(
-							Extensions.MemberAccess(
-								SF.IdentifierName(result),
-								SF.IdentifierName("Data")
+			if (shouldBeNull)
+			{
+				statements.Add(
+						SF.ExpressionStatement(
+							TestBuilder.AssertIsNull(
+								Extensions.MemberAccess(
+									SF.IdentifierName(result),
+									SF.IdentifierName("Data")
+								)
 							)
 						)
-					)
-				);
+					);
+			}
+			else
+			{
+				statements.Add(
+						SF.ExpressionStatement(
+							TestBuilder.AssertIsNotNull(
+								Extensions.MemberAccess(
+									SF.IdentifierName(result),
+									SF.IdentifierName("Data")
+								)
+							)
+						)
+					);
+			}
 			return statements.ToArray();
 		}
 
@@ -531,7 +547,7 @@ namespace Sannel.House.Generator.Generators
 			);
 
 			blocks = blocks.AddStatements(
-				generatePostCommonAssert(result, "data cannot be null")
+				generatePostCommonAssert(result, "data cannot be null", shouldBeNull: true)
 				);
 
 			var expected = "expected";
@@ -570,6 +586,13 @@ namespace Sannel.House.Generator.Generators
 								)
 							),
 							SF.ExpressionStatement(
+								SF.InvocationExpression(SF.IdentifierName("postPreCall"))
+								.AddArgumentListArguments(
+									SF.Argument(SF.IdentifierName(expected)),
+									SF.Argument(SF.IdentifierName(wrapper))
+								)
+							),
+							SF.ExpressionStatement(
 								SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 									SF.IdentifierName(result),
 									SF.InvocationExpression(
@@ -598,6 +621,13 @@ namespace Sannel.House.Generator.Generators
 								)
 							),
 							SF.ExpressionStatement(
+								SF.InvocationExpression(SF.IdentifierName("postPreCall"))
+								.AddArgumentListArguments(
+									SF.Argument(SF.IdentifierName(expected)),
+									SF.Argument(SF.IdentifierName(wrapper))
+								)
+							),
+							SF.ExpressionStatement(
 								SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 									SF.IdentifierName(result),
 									SF.InvocationExpression(
@@ -621,6 +651,13 @@ namespace Sannel.House.Generator.Generators
 			);
 
 			blocks = blocks.AddStatements(
+				SF.ExpressionStatement(
+					SF.InvocationExpression(SF.IdentifierName("postPreCall"))
+					.AddArgumentListArguments(
+						SF.Argument(SF.IdentifierName(expected)),
+						SF.Argument(SF.IdentifierName(wrapper))
+					)
+				),
 				SF.ExpressionStatement(
 					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 						SF.IdentifierName(result),
@@ -700,7 +737,7 @@ namespace Sannel.House.Generator.Generators
 						first.Text,
 						SF.EqualsValueClause(
 							SF.InvocationExpression(
-								context.Text.MemberAccess("Devices", "FirstOrDefault")
+								context.Text.MemberAccess(propertyName, "FirstOrDefault")
 							).AddArgumentListArguments(
 								SF.Argument(
 									SF.ParenthesizedLambdaExpression(
@@ -760,6 +797,7 @@ namespace Sannel.House.Generator.Generators
 					"Sannel.House.Web.Base.Interfaces",
 					"Sannel.House.Web.Base.Models",
 					"Sannel.House.Web.Controllers.api",
+					"Sannel.House.Web.Data",
 					"Sannel.House.Web.Mocks",
 					"System.Collections.Generic",
 					"System.Linq",
@@ -792,6 +830,15 @@ namespace Sannel.House.Generator.Generators
 			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Post))
 			{
 				@class = @class.AddMembers(generatePostTest(controllerName, propertyName, t));
+				@class = @class.AddMembers(SF.MethodDeclaration(SF.ParseTypeName("void"),
+					"postPreCall")
+					.AddModifiers(SF.Token(SyntaxKind.PartialKeyword))
+					.AddParameterListParameters(
+						SF.Parameter(SF.Identifier("data")).WithType(SF.ParseTypeName(t.Name)),
+						SF.Parameter(SF.Identifier("wrapper")).WithType(SF.ParseTypeName("ContextWrapper"))
+					).WithSemicolonToken(SF.Token(SyntaxKind.SemicolonToken))
+					.WithLeadingTrivia(SF.Comment("// used to make sure reference tables have data needed for a test to succeed"))
+				);
 			}
 
 			return unit.AddMembers(SF.NamespaceDeclaration(SF.IdentifierName("Sannel.House.Web.Tests")).AddMembers(@class));
