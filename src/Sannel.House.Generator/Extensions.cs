@@ -275,6 +275,32 @@ namespace Sannel.House.Generator
 			return SF.LiteralExpression(SyntaxKind.NullLiteralExpression);
 		}
 
+		public static ExpressionSyntax LiteralForObject(this Object obj)
+		{
+			if(obj != null)
+			{
+				var type = obj.GetType();
+				if(type == typeof(bool))
+				{
+					return ((bool)obj).ToLiteral();
+				}
+				if(type == typeof(Int32))
+				{
+					return ((Int32)obj).ToLiteral();
+				}
+				if(type == typeof(double))
+				{
+					return ((double)obj).ToLiteral();
+				}
+				if(type == typeof(String))
+				{
+					return ((String)obj).ToLiteral();
+				}
+
+			}
+			return SF.LiteralExpression(SyntaxKind.NullLiteralExpression);
+		}
+
 		public static ExpressionSyntax LiteralForProperty(this Random rand, Type t, String name)
 		{
 			if (t == typeof(bool))
@@ -415,6 +441,22 @@ namespace Sannel.House.Generator
 		{
 			var att = pi.GetCustomAttribute<GenerationAttribute>();
 			return att != null && att.Ignore;
+		}
+
+		public static bool HasAlwaysValue(this PropertyInfo pi)
+		{
+			var att = pi.GetCustomAttribute<GenerationAttribute>();
+			return att != null && att.AlwaysValue != null;
+		}
+
+		public static Object GetAlwaysValue(this PropertyInfo pi)
+		{
+			var att = pi.GetCustomAttribute<GenerationAttribute>();
+			if(att != null)
+			{
+				return att.AlwaysValue;
+			}
+			return null;
 		}
 
 		public static GenerationAttribute GetGenerationAttribute(this PropertyInfo pi)

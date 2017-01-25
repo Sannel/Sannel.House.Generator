@@ -236,7 +236,15 @@ namespace Sannel.House.Generator.Generators
 			{
 				if (!p.ShouldIgnore() && String.Compare(p.Name, ignorePropertyName, true) != 0)
 				{
-					statements.Add(SF.ExpressionStatement(Extensions.SetPropertyValue(SF.IdentifierName(variableName), p.Name, rand.LiteralForProperty(p.PropertyType, p.Name))));
+					if (p.HasAlwaysValue())
+					{
+						Object o = p.GetAlwaysValue();
+						statements.Add(SF.ExpressionStatement(Extensions.SetPropertyValue(SF.IdentifierName(variableName), p.Name, o.LiteralForObject())));
+					}
+					else
+					{
+						statements.Add(SF.ExpressionStatement(Extensions.SetPropertyValue(SF.IdentifierName(variableName), p.Name, rand.LiteralForProperty(p.PropertyType, p.Name))));
+					}
 				}
 			}
 
@@ -785,6 +793,274 @@ namespace Sannel.House.Generator.Generators
 
 			return method;
 		}
+		private MethodDeclarationSyntax generatePutTest(String controllerName, String propertyName, Type t)
+		{
+			var wrapper = SF.Identifier("wrapper");
+			var context = SF.Identifier("context");
+			var controller = SF.Identifier("controller");
+			var result = SF.Identifier("result");
+			var method = SF.MethodDeclaration(SF.ParseTypeName("void"), "PutTest")
+				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword))
+				.AddAttributeLists(SF.AttributeList().AddAttributes(TestBuilder.GetMethodAttribute()));
+
+			var blocks = SF.Block();
+			blocks = blocks.AddStatements(
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						result.Text,
+						SF.EqualsValueClause(
+							SF.InvocationExpression(
+								Extensions.MemberAccess(
+									controller.Text,
+									"Put"
+								)
+							).AddArgumentListArguments(
+								SF.Argument(SF.LiteralExpression(SyntaxKind.NullLiteralExpression))
+							)
+						)
+					)
+				)
+			);
+
+			blocks = blocks.AddStatements(
+				generatePostCommonAssert(result, "data cannot be null", shouldBeNull: true)
+				);
+
+			var expected = "expected";
+
+			blocks = blocks.AddStatements(
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(expected, 
+						SF.EqualsValueClause(
+							SF.ObjectCreationExpression(SF.ParseTypeName(t.Name))
+							.AddArgumentListArguments()
+						)
+					)
+				)
+			);
+
+			var props = t.GetProperties();
+			var key = props.GetKeyProperty();
+
+			foreach(var prop in props)
+			{
+				var genArg = prop.GetGenerationAttribute();
+				if (genArg != null && !genArg.Ignore)
+				{
+
+					if (genArg.CheckForEmptyString)
+					{
+						blocks = blocks.AddStatements(
+							generateSeedObject(expected, t.Name, props, prop.Name)
+						);
+
+						blocks = blocks.AddStatements(
+							SF.ExpressionStatement(
+								SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+									expected.MemberAccess(prop.Name),
+									"".ToLiteral()
+								)
+							),
+							SF.ExpressionStatement(
+								SF.InvocationExpression(SF.IdentifierName("putPreCall"))
+								.AddArgumentListArguments(
+									SF.Argument(SF.IdentifierName(expected)),
+									SF.Argument(SF.IdentifierName(wrapper))
+								)
+							),
+							SF.ExpressionStatement(
+								SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+									SF.IdentifierName(result),
+									SF.InvocationExpression(
+										SF.IdentifierName(controller).MemberAccess(SF.IdentifierName("Put"))
+									).AddArgumentListArguments(
+										SF.Argument(SF.IdentifierName(expected))
+									)
+								)
+							)
+						);
+						blocks = blocks.AddStatements(
+							generatePostCommonAssert(result, $"{prop.Name} must have a non empty value")
+							);
+					}
+					if (genArg.IsRequired)
+					{
+						blocks = blocks.AddStatements(
+							generateSeedObject(expected, t.Name, props, prop.Name)
+						);
+
+						blocks = blocks.AddStatements(
+							SF.ExpressionStatement(
+								SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+									expected.MemberAccess(prop.Name),
+									SF.LiteralExpression(SyntaxKind.NullLiteralExpression)
+								)
+							),
+							SF.ExpressionStatement(
+								SF.InvocationExpression(SF.IdentifierName("putPreCall"))
+								.AddArgumentListArguments(
+									SF.Argument(SF.IdentifierName(expected)),
+									SF.Argument(SF.IdentifierName(wrapper))
+								)
+							),
+							SF.ExpressionStatement(
+								SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+									SF.IdentifierName(result),
+									SF.InvocationExpression(
+										SF.IdentifierName(controller).MemberAccess(SF.IdentifierName("Put"))
+									).AddArgumentListArguments(
+										SF.Argument(SF.IdentifierName(expected))
+									)
+								)
+							)
+						);
+						blocks = blocks.AddStatements(
+							generatePostCommonAssert(result, $"{prop.Name} must not be null")
+							);
+
+					}
+				}
+			}
+
+			blocks = blocks.AddStatements(
+				generateSeedObject(expected, t.Name, props, "Success Test")
+			);
+
+			blocks = blocks.AddStatements(
+				SF.ExpressionStatement(
+					SF.InvocationExpression(SF.IdentifierName("putPreCall"))
+					.AddArgumentListArguments(
+						SF.Argument(SF.IdentifierName(expected)),
+						SF.Argument(SF.IdentifierName(wrapper))
+					)
+				),
+				SF.ExpressionStatement(
+					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+						SF.IdentifierName(result),
+						SF.InvocationExpression(
+							SF.IdentifierName(controller).MemberAccess(SF.IdentifierName("Put"))
+						).AddArgumentListArguments(
+							SF.Argument(SF.IdentifierName(expected))
+						)
+					)
+				),
+				SF.ExpressionStatement(
+					TestBuilder.AssertIsNotNull(SF.IdentifierName(result))
+				),
+				SF.ExpressionStatement(
+					TestBuilder.AssertIsTrue(result.Text.MemberAccess("Success"), "Success was not true")
+				),
+				SF.ExpressionStatement(
+					TestBuilder.AssertAreEqual(
+						0.ToLiteral(),
+						result.Text.MemberAccess("Errors", "Count")
+					)
+				),
+				SF.ExpressionStatement(
+					TestBuilder.AssertIsNotNull(result.Text.MemberAccess("Data"))
+				)
+			);
+
+			if (key.PropertyType == typeof(Int32) || key.PropertyType == typeof(Int64) || key.PropertyType == typeof(Int32))
+			{
+				blocks = blocks.AddStatements(
+					SF.ExpressionStatement(
+						TestBuilder.AssertIsTrue(
+							SF.BinaryExpression(SyntaxKind.GreaterThanExpression,
+								result.Text.MemberAccess("Data", key.Name),
+								0.ToLiteral()
+							),
+							$"{key.Name} not updated"
+						)
+					)
+				);
+			}
+			else if (key.PropertyType == typeof(Guid))
+			{
+				blocks = blocks.AddStatements(
+					SF.ExpressionStatement(
+						TestBuilder.AssertIsTrue(
+							SF.BinaryExpression(SyntaxKind.NotEqualsExpression,
+								result.Text.MemberAccess("Data", key.Name),
+								SF.InvocationExpression(
+									"Guid".MemberAccess("NewGuid")
+								).AddArgumentListArguments()
+							)
+						)
+					)
+				);
+			}
+			else
+			{
+				var list = blocks.Statements;
+				var existing = list.Last();
+				list = list.Replace(
+					existing,
+					existing.WithTrailingTrivia(SF.Comment($"// the key type {key.PropertyType} is not supported right now"))
+					);
+
+				blocks = blocks.WithStatements(
+					list
+				);
+			}
+
+			var resultData = SF.Identifier("resultData");
+			var first = SF.Identifier("first");
+
+			blocks = blocks.AddStatements(
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						first.Text,
+						SF.EqualsValueClause(
+							SF.InvocationExpression(
+								context.Text.MemberAccess(propertyName, "FirstOrDefault")
+							).AddArgumentListArguments(
+								SF.Argument(
+									SF.ParenthesizedLambdaExpression(
+										SF.BinaryExpression(SyntaxKind.EqualsExpression,
+											"i".MemberAccess(key.Name),
+											result.Text.MemberAccess("Data", key.Name)
+										)
+									).AddParameterListParameters(
+										SF.Parameter(SF.Identifier("i"))
+									)
+								)
+							)
+						)
+					)
+				),
+				SF.ExpressionStatement(
+					TestBuilder.AssertIsNotNull(SF.IdentifierName(first), "first was not set")
+				),
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						resultData.Text,
+						SF.EqualsValueClause(
+							result.Text.MemberAccess("Data")
+						)
+					)
+				)
+			);
+
+			foreach(var prop in props)
+			{
+				if (!prop.ShouldIgnore())
+				{
+					blocks = blocks.AddStatements(
+						SF.ExpressionStatement(
+							TestBuilder.AssertAreEqual(
+								first.Text.MemberAccess(prop.Name),
+								resultData.Text.MemberAccess(prop.Name)
+							)
+						)
+					);
+				}
+			}
+
+			method = method.AddBodyStatements(wrapBlocks(blocks, controllerName));
+
+			return method;
+		}
 
 		protected override CompilationUnitSyntax internalGenerate(string propertyName, Type t)
 		{
@@ -832,6 +1108,19 @@ namespace Sannel.House.Generator.Generators
 				@class = @class.AddMembers(generatePostTest(controllerName, propertyName, t));
 				@class = @class.AddMembers(SF.MethodDeclaration(SF.ParseTypeName("void"),
 					"postPreCall")
+					.AddModifiers(SF.Token(SyntaxKind.PartialKeyword))
+					.AddParameterListParameters(
+						SF.Parameter(SF.Identifier("data")).WithType(SF.ParseTypeName(t.Name)),
+						SF.Parameter(SF.Identifier("wrapper")).WithType(SF.ParseTypeName("ContextWrapper"))
+					).WithSemicolonToken(SF.Token(SyntaxKind.SemicolonToken))
+					.WithLeadingTrivia(SF.Comment("// used to make sure reference tables have data needed for a test to succeed"))
+				);
+			}
+			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Put))
+			{
+				@class = @class.AddMembers(generatePutTest(controllerName, propertyName, t));
+				@class = @class.AddMembers(SF.MethodDeclaration(SF.ParseTypeName("void"),
+					"putPreCall")
 					.AddModifiers(SF.Token(SyntaxKind.PartialKeyword))
 					.AddParameterListParameters(
 						SF.Parameter(SF.Identifier("data")).WithType(SF.ParseTypeName(t.Name)),
