@@ -217,20 +217,23 @@ namespace Sannel.House.Generator.Generators
 			return blocks;
 		}
 
-		private StatementSyntax[] generateSeedObject(String variableName, String typeName, PropertyInfo[] props, String ignorePropertyName)
+		private StatementSyntax[] generateSeedObject(String variableName, String typeName, PropertyInfo[] props, String ignorePropertyName, bool createNewObject=true)
 		{
+			Task.Delay(25).Wait(); // delay a little bit so we dont generate the same items
 			var rand = new Random();
 			List<ExpressionStatementSyntax> statements = new List<ExpressionStatementSyntax>();
 
-			statements.Add(
-				SF.ExpressionStatement(
-					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
-						SF.IdentifierName(variableName),
-						SF.ObjectCreationExpression(SF.ParseTypeName(typeName))
-						.AddArgumentListArguments()
-					)
-				).WithLeadingTrivia(SF.Comment($"// {ignorePropertyName} test"))
-				);
+			if (createNewObject)
+			{
+				statements.Add(
+					SF.ExpressionStatement(
+						SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+							SF.IdentifierName(variableName),
+							SF.ObjectCreationExpression(SF.ParseTypeName(typeName))
+							.AddArgumentListArguments()
+						)
+					));
+			}
 
 			foreach (var p in props)
 			{
@@ -246,6 +249,11 @@ namespace Sannel.House.Generator.Generators
 						statements.Add(SF.ExpressionStatement(Extensions.SetPropertyValue(SF.IdentifierName(variableName), p.Name, rand.LiteralForProperty(p.PropertyType, p.Name))));
 					}
 				}
+			}
+
+			if(statements.Count > 0)
+			{
+				statements[0] = statements[0].WithLeadingTrivia(SF.Comment($"// {ignorePropertyName}"));
 			}
 
 			return statements.ToArray();
@@ -925,6 +933,31 @@ namespace Sannel.House.Generator.Generators
 			blocks = blocks.AddStatements(
 				generateSeedObject(expected, t.Name, props, "Success Test")
 			);
+
+			blocks = blocks.AddStatements(
+				SF.ExpressionStatement(
+					SF.InvocationExpression(SF.IdentifierName("putPreCall"))
+					.AddArgumentListArguments(
+						SF.Argument(SF.IdentifierName(expected)),
+						SF.Argument(SF.IdentifierName(wrapper))
+					)
+				),
+				SF.ExpressionStatement(
+					SF.InvocationExpression(
+						context.Text.MemberAccess(propertyName, "Add")
+					).AddArgumentListArguments(
+						SF.Argument(SF.IdentifierName(expected))
+					)
+				),
+				SF.ExpressionStatement(
+					SF.InvocationExpression(
+						context.Text.MemberAccess("SaveChanges")
+					).AddArgumentListArguments()
+				)
+			);
+			blocks = blocks.AddStatements(
+				generateSeedObject(expected, t.Name, props.Where(i => !i.ShouldIgnore() && i.Name != key.Name && !i.CantUpdate()).ToArray(), "Reset props and call put", false)
+				);
 
 			blocks = blocks.AddStatements(
 				SF.ExpressionStatement(

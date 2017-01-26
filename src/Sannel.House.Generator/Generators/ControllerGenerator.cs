@@ -732,26 +732,6 @@ namespace Sannel.House.Generator.Generators
 			SF.IdentifierName("result"))))
 				);
 
-			var keyType = SF.ParseTypeName(key.PropertyType.Name);
-			ExpressionSyntax defaultValue = keyType.GetDefaultValue();
-			if (key.PropertyType == typeof(Guid))
-			{
-				Random rand = new Random();
-				defaultValue = rand.LiteralForProperty(key.PropertyType, key.Name);
-			}
-
-			blocks = blocks.AddStatements(
-				SF.ExpressionStatement(
-				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
-					Extensions.MemberAccess(
-						SF.IdentifierName(data),
-						SF.IdentifierName(key.Name)
-					),
-					defaultValue
-				)
-				)
-				);
-
 			foreach (var prop in props)
 			{
 				if (!prop.ShouldIgnore() && !prop.IsKey())
