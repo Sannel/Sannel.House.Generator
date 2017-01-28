@@ -968,6 +968,41 @@ namespace Sannel.House.Generator.Generators
 			return method;
 		}
 
+		private MethodDeclarationSyntax generateDeleteMethod(String propertyName, Type t)
+		{
+			var props = t.GetProperties();
+			var keyName = SF.Identifier("key");
+			var result = SF.Identifier("result");
+
+			var key = props.GetKeyProperty();
+			if (key == null)
+			{
+				return null;
+			}
+
+			var method = SF.MethodDeclaration(SF.GenericName("Result")
+					.AddTypeArgumentListArguments(SF.ParseTypeName(t.Name))
+					, "Delete")
+				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword))
+				.AddParameterListParameters(
+					SF.Parameter(keyName)
+				)
+				.WithAttributeLists(
+					new SyntaxList<AttributeListSyntax>().Add(
+						SF.AttributeList().AddAttributes(
+							SF.Attribute(SF.IdentifierName("HttpDelete"))
+							.AddArgumentListArguments(
+								SF.AttributeArgument($"{{{keyName.Text}}}".ToLiteral())
+							)
+						)
+					)
+				);
+
+			var blocks = SF.Block();
+
+			return method.AddBodyStatements(blocks);
+		}
+
 		protected override CompilationUnitSyntax internalGenerate(string propertyName, Type t)
 		{
 			var fileName = $"{t.Name}Controller";
@@ -1067,6 +1102,28 @@ namespace Sannel.House.Generator.Generators
 						.AddModifiers(SF.Token(SyntaxKind.PartialKeyword))
 						.AddParameterListParameters(
 							SF.Parameter(SF.Identifier("data")).WithType(SF.ParseTypeName(t.Name))
+						).WithSemicolonToken(SF.Token(SyntaxKind.SemicolonToken))
+					);
+				}
+			}
+
+			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Delete))
+			{
+				var delete = generateDeleteMethod(propertyName, t);
+				if(delete != null)
+				{
+					@class = @class.AddMembers(delete);
+					@class = @class.AddMembers(SF.MethodDeclaration(SF.ParseTypeName("void"),
+						"putExtraVerification")
+						.AddModifiers(SF.Token(SyntaxKind.PartialKeyword))
+						.AddParameterListParameters(
+							SF.Parameter(SF.Identifier("data")).WithType(SF.ParseTypeName(t.Name)),
+							SF.Parameter(SF.Identifier("result")).WithType(
+								SF.GenericName("Result")
+								.AddTypeArgumentListArguments(
+									SF.ParseTypeName(t.Name)
+								)
+							)
 						).WithSemicolonToken(SF.Token(SyntaxKind.SemicolonToken))
 					);
 				}
