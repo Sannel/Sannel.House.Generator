@@ -797,7 +797,7 @@ namespace Sannel.House.Generator.Generators
 				}
 			}
 
-			method = method.AddBodyStatements(wrapBlocks(blocks, controllerName));
+			method = method.WithBody(wrapBlocks(blocks, controllerName));
 
 			return method;
 		}
@@ -1090,7 +1090,7 @@ namespace Sannel.House.Generator.Generators
 				}
 			}
 
-			method = method.AddBodyStatements(wrapBlocks(blocks, controllerName));
+			method = method.WithBody(wrapBlocks(blocks, controllerName));
 
 			return method;
 		}

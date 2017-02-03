@@ -973,6 +973,7 @@ namespace Sannel.House.Generator.Generators
 			var props = t.GetProperties();
 			var keyName = SF.Identifier("key");
 			var result = SF.Identifier("result");
+			var data = SF.Identifier("data");
 
 			var key = props.GetKeyProperty();
 			if (key == null)
@@ -999,8 +1000,156 @@ namespace Sannel.House.Generator.Generators
 				);
 
 			var blocks = SF.Block();
+			blocks = blocks.AddStatements(
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(result.Text,
+						SF.EqualsValueClause(
+							SF.ObjectCreationExpression(SF.GenericName("Result").AddTypeArgumentListArguments(
+									SF.ParseTypeName(t.Name)
+							)).AddArgumentListArguments()
+						)
+					)
+				),
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						data.Text,
+						SF.EqualsValueClause(
+							SF.InvocationExpression(
+								context.Text.MemberAccess(propertyName, "FirstOrDefault")
+							).AddArgumentListArguments(
+								SF.Argument(
+									SF.ParenthesizedLambdaExpression(
+										SF.BinaryExpression(SyntaxKind.EqualsExpression,
+											"i".MemberAccess(key.Name),
+											SF.IdentifierName(keyName)
+										)
+									).AddParameterListParameters(
+										SF.Parameter(SF.Identifier("i"))
+									)
+								)
+							)
+						)
+					)
+				),
+				SF.IfStatement(
+					SF.BinaryExpression(SyntaxKind.NotEqualsExpression, 
+						SF.IdentifierName(data),
+						SF.LiteralExpression(SyntaxKind.NullLiteralExpression)
+					),
+					SF.Block().AddStatements(
+						SF.ExpressionStatement(
+							SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+								result.Text.MemberAccess("Data"),
+								SF.IdentifierName(data)
+							)
+						),
+						SF.ExpressionStatement(
+							SF.InvocationExpression(SF.IdentifierName("deleteExtraVerification"))
+							.AddArgumentListArguments(
+								SF.Argument(
+									SF.IdentifierName(data)
+								),
+								SF.Argument(
+									SF.IdentifierName(result)
+								)
+							)
+						),
+						SF.IfStatement(
+							SF.BinaryExpression(SyntaxKind.GreaterThanExpression,
+								result.Text.MemberAccess("Errors", "Count"),
+								0.ToLiteral()
+							),
+							SF.Block().AddStatements(
+								SF.ReturnStatement(SF.IdentifierName(result))
+							)
+						),
+						SF.TryStatement()
+						.AddBlockStatements(
+							SF.ExpressionStatement(
+								SF.InvocationExpression(context.Text.MemberAccess(propertyName, "Remove"))
+								.AddArgumentListArguments(
+									SF.Argument(
+										SF.IdentifierName(data)
+									)
+								)
+							),
+							SF.ExpressionStatement(
+								SF.InvocationExpression(context.Text.MemberAccess("SaveChanges"))
+								.AddArgumentListArguments()
+							),
+							SF.ExpressionStatement(
+								SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+									result.Text.MemberAccess("Success"),
+									true.ToLiteral()
+								)
+							),
+							SF.ReturnStatement(
+								SF.IdentifierName(result)
+							)
+						).AddCatches(
+							SF.CatchClause()
+							.WithDeclaration(SF.CatchDeclaration(SF.ParseTypeName("Exception"), SF.Identifier("ex")))
+							.AddBlockStatements(
+								SF.IfStatement(
+									SF.InvocationExpression("logger".MemberAccess("IsEnabled"))
+									.AddArgumentListArguments(
+										SF.Argument("LogLevel".MemberAccess("Error"))
+									),
+									SF.Block()
+									.AddStatements(
+										SF.ExpressionStatement(
+											SF.InvocationExpression(
+												"logger".MemberAccess("LogError")
+											)
+											.AddArgumentListArguments(
+												SF.Argument("LoggingIds".MemberAccess("DeleteException")),
+												SF.Argument(SF.IdentifierName("ex")),
+												SF.Argument(((StringToken)$"Exception deleting {t.Name} with {key.Name}").ToInterpolatedString(((StringToken)keyName.Text).AsInterpolation())
+											)
+										)
+									)
+								)
+							),
+							SF.ExpressionStatement(
+								SF.InvocationExpression(
+									result.Text.MemberAccess("Errors", "Add")
+								).AddArgumentListArguments(
+									SF.Argument("ex".MemberAccess("Message"))
+								)
+							),
+							SF.ReturnStatement(
+								SF.IdentifierName(result)
+							)
+						)
+					)
+				))
+			);
 
-			return method.AddBodyStatements(blocks);
+			/*			
+
+			if (data != null)
+			{
+				try
+				{
+					result.Success = true;
+					return result;
+				}
+				catch(Exception ex)
+				{
+					if (logger.IsEnabled(LogLevel.Error))
+					{
+						logger.LogError(LoggingIds.DeleteException, ex, $"Exception deleting Device with Id {key}");
+					}
+					result.Errors.Add(ex.Message);
+					return result;
+				}
+			}
+
+			result.Errors.Add($"Device with Id {key} was not found");
+			return result;
+*/
+
+			return method.WithBody(blocks);
 		}
 
 		protected override CompilationUnitSyntax internalGenerate(string propertyName, Type t)
@@ -1114,7 +1263,7 @@ namespace Sannel.House.Generator.Generators
 				{
 					@class = @class.AddMembers(delete);
 					@class = @class.AddMembers(SF.MethodDeclaration(SF.ParseTypeName("void"),
-						"putExtraVerification")
+						"deleteExtraVerification")
 						.AddModifiers(SF.Token(SyntaxKind.PartialKeyword))
 						.AddParameterListParameters(
 							SF.Parameter(SF.Identifier("data")).WithType(SF.ParseTypeName(t.Name)),
