@@ -987,6 +987,7 @@ namespace Sannel.House.Generator.Generators
 				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword))
 				.AddParameterListParameters(
 					SF.Parameter(keyName)
+					.WithType(SF.ParseTypeName(key.PropertyType.Name))
 				)
 				.WithAttributeLists(
 					new SyntaxList<AttributeListSyntax>().Add(
@@ -1122,28 +1123,22 @@ namespace Sannel.House.Generator.Generators
 							)
 						)
 					)
-				))
+				)),
+				SF.ExpressionStatement(
+					SF.InvocationExpression(result.Text.MemberAccess("Errors", "Add"))
+					.AddArgumentListArguments(
+						SF.Argument(
+							((StringToken)"Device with ID ").ToInterpolatedString(((StringToken)keyName.Text).AsInterpolation(),
+								" was not found")
+						)
+					)
+				),
+				SF.ReturnStatement(
+					SF.IdentifierName(result)
+				)
 			);
 
 			/*			
-
-			if (data != null)
-			{
-				try
-				{
-					result.Success = true;
-					return result;
-				}
-				catch(Exception ex)
-				{
-					if (logger.IsEnabled(LogLevel.Error))
-					{
-						logger.LogError(LoggingIds.DeleteException, ex, $"Exception deleting Device with Id {key}");
-					}
-					result.Errors.Add(ex.Message);
-					return result;
-				}
-			}
 
 			result.Errors.Add($"Device with Id {key} was not found");
 			return result;
