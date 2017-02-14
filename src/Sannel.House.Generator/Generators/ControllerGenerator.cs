@@ -23,8 +23,9 @@ namespace Sannel.House.Generator.Generators
 
 		private MethodDeclarationSyntax generateGetMethod(String propertyName, Type t)
 		{
-			var method = SF.MethodDeclaration(SF.GenericName("IEnumerable").AddTypeArgumentListArguments(SF.ParseTypeName(t.Name)), "Get")
-				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword));
+			var method = SF.MethodDeclaration(SF.GenericName("IEnumerable")
+				.AddTypeArgumentListArguments(SF.ParseTypeName(t.Name)), "internalGet")
+				.AddModifiers(SF.Token(SyntaxKind.PrivateKeyword));
 
 			var props = t.GetProperties();
 
@@ -76,20 +77,10 @@ namespace Sannel.House.Generator.Generators
 				return null;
 			}
 
-			var method = SF.MethodDeclaration(SF.ParseTypeName(t.Name), "Get")
-				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword))
+			var method = SF.MethodDeclaration(SF.ParseTypeName(t.Name), "internalGet")
+				.AddModifiers(SF.Token(SyntaxKind.PrivateKeyword))
 				.AddParameterListParameters(
 					SF.Parameter(SF.Identifier("id")).WithType(SF.ParseTypeName(key.PropertyType.Name))
-				)
-				.WithAttributeLists(
-					new SyntaxList<AttributeListSyntax>().Add(
-						SF.AttributeList().AddAttributes(
-							SF.Attribute(SF.IdentifierName("HttpGet"))
-							.AddArgumentListArguments(
-								SF.AttributeArgument(SF.LiteralExpression(SyntaxKind.StringLiteralExpression, SF.Literal("{id}")))
-							)
-						)
-					)
 				);
 
 			var rStatement = SF.ReturnStatement(
@@ -251,22 +242,11 @@ namespace Sannel.House.Generator.Generators
 
 			var method = SF.MethodDeclaration(SF.GenericName("Result")
 					.AddTypeArgumentListArguments(SF.ParseTypeName(t.Name))
-					, "Post")
-				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword))
+					, "internalPost")
+				.AddModifiers(SF.Token(SyntaxKind.PrivateKeyword))
 				.AddParameterListParameters(
 					SF.Parameter(data)
 						.WithType(SF.ParseTypeName(t.Name))
-						.AddAttributeLists(
-							SF.AttributeList()
-							.AddAttributes(SF.Attribute(SF.IdentifierName("FromBody")))
-						)
-				)
-				.WithAttributeLists(
-					new SyntaxList<AttributeListSyntax>().Add(
-						SF.AttributeList().AddAttributes(
-							SF.Attribute(SF.IdentifierName("HttpPost"))
-						)
-					)
 				);
 
 			var blocks = SF.Block();
@@ -629,22 +609,11 @@ namespace Sannel.House.Generator.Generators
 
 			var method = SF.MethodDeclaration(SF.GenericName("Result")
 					.AddTypeArgumentListArguments(SF.ParseTypeName(t.Name))
-					, "Put")
-				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword))
+					, "internalPut")
+				.AddModifiers(SF.Token(SyntaxKind.PrivateKeyword))
 				.AddParameterListParameters(
 					SF.Parameter(data)
 						.WithType(SF.ParseTypeName(t.Name))
-						.AddAttributeLists(
-							SF.AttributeList()
-							.AddAttributes(SF.Attribute(SF.IdentifierName("FromBody")))
-						)
-				)
-				.WithAttributeLists(
-					new SyntaxList<AttributeListSyntax>().Add(
-						SF.AttributeList().AddAttributes(
-							SF.Attribute(SF.IdentifierName("HttpPut"))
-						)
-					)
 				);
 
 			var blocks = SF.Block();
@@ -983,20 +952,10 @@ namespace Sannel.House.Generator.Generators
 
 			var method = SF.MethodDeclaration(SF.GenericName("Result")
 					.AddTypeArgumentListArguments(SF.ParseTypeName(t.Name))
-					, "Delete")
-				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword))
+					, "internalDelete")
+				.AddModifiers(SF.Token(SyntaxKind.PrivateKeyword))
 				.AddParameterListParameters(
 					SF.Parameter(keyName)
-				)
-				.WithAttributeLists(
-					new SyntaxList<AttributeListSyntax>().Add(
-						SF.AttributeList().AddAttributes(
-							SF.Attribute(SF.IdentifierName("HttpDelete"))
-							.AddArgumentListArguments(
-								SF.AttributeArgument($"{{{keyName.Text}}}".ToLiteral())
-							)
-						)
-					)
 				);
 
 			var blocks = SF.Block();
