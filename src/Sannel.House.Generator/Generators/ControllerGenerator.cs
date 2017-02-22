@@ -956,6 +956,7 @@ namespace Sannel.House.Generator.Generators
 				.AddModifiers(SF.Token(SyntaxKind.PrivateKeyword))
 				.AddParameterListParameters(
 					SF.Parameter(keyName)
+					.WithType(SF.ParseTypeName(key.PropertyType.Name))
 				);
 
 			var blocks = SF.Block();
