@@ -261,7 +261,7 @@ namespace Sannel.House.Generator.Generators
 
 		private MethodDeclarationSyntax generateGetTest(String controllerName, String propertyName, Type t)
 		{
-			var method = SF.MethodDeclaration(SF.ParseTypeName("void"), "GetTest")
+			var method = SF.MethodDeclaration(SF.ParseTypeName("void"), "GetPagedTest")
 				.AddModifiers(SF.Token(SyntaxKind.PublicKeyword));
 
 			var att = TestBuilder.GetMethodAttribute();
@@ -272,93 +272,37 @@ namespace Sannel.House.Generator.Generators
 				);
 			}
 
-			SyntaxToken var1, var2, var3;
-			PropertyInfo[] props;
-			var blocks = generateSeeds(t, context, propertyName, out var1, out var2, out var3, out props);
+			var createObj = SF.ObjectCreationExpression(SF.ParseTypeName(t.Name)).AddArgumentListArguments();
 
-			var results = SF.Identifier("results");
-			var list = SF.Identifier("list");
-			blocks = blocks.AddStatements(SF.LocalDeclarationStatement(
-				Extensions.VariableDeclaration(
-					results.Text,
-					SF.EqualsValueClause(
-						SF.InvocationExpression(
-							Extensions.MemberAccess(
-								SF.IdentifierName(controller),
-								SF.IdentifierName("Get")
-							)
-						)
-					)
-				).WithLeadingTrivia(SF.Comment("//call get method"))
-				),
-				SF.ExpressionStatement(
-					TestBuilder.AssertIsNotNull(SF.IdentifierName(results))
+			SyntaxToken var1 = SF.Identifier("var1"), var2 = SF.Identifier("var2"), var3 = SF.Identifier("var3"), var4 = SF.Identifier("var4"), var5 = SF.Identifier("var5");
+			PropertyInfo[] props = t.GetProperties();
+			var blocks = SF.Block();
+
+			blocks = blocks.AddStatements(
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(var1.Text, SF.EqualsValueClause(createObj))
 				),
 				SF.LocalDeclarationStatement(
-					Extensions.VariableDeclaration(
-						list.Text,
-						SF.EqualsValueClause(
-							SF.InvocationExpression(
-								Extensions.MemberAccess(
-									SF.IdentifierName(results),
-									SF.IdentifierName("ToList")
-								)
-							)
-						)
-					)
+					Extensions.VariableDeclaration(var2.Text, SF.EqualsValueClause(createObj))
+				),
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(var3.Text, SF.EqualsValueClause(createObj))
+				),
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(var4.Text, SF.EqualsValueClause(createObj))
+				),
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(var5.Text, SF.EqualsValueClause(createObj))
 				)
-				);
+			);
 
-			blocks = blocks.AddStatements(SF.ExpressionStatement(
-				TestBuilder.AssertAreEqual(3.ToLiteral(), Extensions.MemberAccess(list.Text, "Count"))
-			));
-
-			var one = SF.Identifier("one");
-			blocks = blocks.AddStatements(SF.LocalDeclarationStatement(
-				Extensions.VariableDeclaration(one.Text,
-					SF.EqualsValueClause(
-						SF.ElementAccessExpression(SF.IdentifierName(list))
-						.WithArgumentList(SF.BracketedArgumentList()
-							.AddArguments(
-								SF.Argument(0.ToLiteral())
-							)
-						)
-					)
-				)
-			));
-			blocks = blocks.AddStatements(generateCompare(var3, one, props));
-
-			var two = SF.Identifier("two");
-			blocks = blocks.AddStatements(SF.LocalDeclarationStatement(
-				Extensions.VariableDeclaration(two.Text,
-					SF.EqualsValueClause(
-						SF.ElementAccessExpression(SF.IdentifierName(list))
-						.WithArgumentList(SF.BracketedArgumentList()
-							.AddArguments(
-								SF.Argument(1.ToLiteral())
-							)
-						)
-					)
-				)
-			));
-			blocks = blocks.AddStatements(generateCompare(var2, two, props));
-			var three = SF.Identifier("three");
-			blocks = blocks.AddStatements(SF.LocalDeclarationStatement(
-				Extensions.VariableDeclaration(three.Text,
-					SF.EqualsValueClause(
-						SF.ElementAccessExpression(SF.IdentifierName(list))
-						.WithArgumentList(SF.BracketedArgumentList()
-							.AddArguments(
-								SF.Argument(2.ToLiteral())
-							)
-						)
-					)
-				)
-			));
-			blocks = blocks.AddStatements(generateCompare(var1, three, props));
-
-
-			method = method.AddBodyStatements(wrapBlocks(blocks, controllerName));
+			blocks = blocks.AddStatements(generateSeedObject(var1.Text, t.Name, props, "var1", false));
+			blocks = blocks.AddStatements(generateSeedObject(var2.Text, t.Name, props, "var2", false));
+			blocks = blocks.AddStatements(generateSeedObject(var3.Text, t.Name, props, "var3", false));
+			blocks = blocks.AddStatements(generateSeedObject(var4.Text, t.Name, props, "var4", false));
+			blocks = blocks.AddStatements(generateSeedObject(var5.Text, t.Name, props, "var5", false));
+			
+			method = method.WithBody(wrapBlocks(blocks, controllerName));
 
 			return method;
 		}

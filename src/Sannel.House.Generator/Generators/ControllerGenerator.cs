@@ -23,9 +23,13 @@ namespace Sannel.House.Generator.Generators
 
 		private MethodDeclarationSyntax generateGetMethod(String propertyName, Type t)
 		{
-			var method = SF.MethodDeclaration(SF.GenericName("IEnumerable")
-				.AddTypeArgumentListArguments(SF.ParseTypeName(t.Name)), "internalGet")
-				.AddModifiers(SF.Token(SyntaxKind.PrivateKeyword));
+			var method = SF.MethodDeclaration(SF.GenericName("PagedResults")
+				.AddTypeArgumentListArguments(SF.ParseTypeName(t.Name)), "internalGetPaged")
+				.AddModifiers(SF.Token(SyntaxKind.PrivateKeyword))
+				.AddParameterListParameters(
+					SF.Parameter(SF.Identifier("page")).WithType(SF.ParseTypeName("int")),
+					SF.Parameter(SF.Identifier("pageSize")).WithType(SF.ParseTypeName("int"))
+				);
 
 			var props = t.GetProperties();
 
@@ -33,9 +37,22 @@ namespace Sannel.House.Generator.Generators
 
 			var dm = props.GetSortProperty(out forward);
 
+			var query = SF.Identifier("query");
+
+			var blocks = SF.Block()
+				.AddStatements(
+					SF.LocalDeclarationStatement(
+						SF.VariableDeclaration(SF.GenericName("IQueryable")
+							.AddTypeArgumentListArguments(SF.ParseTypeName(t.Name)))
+							.AddVariables(SF.VariableDeclarator(query))
+					)
+				);
+
 			if (dm != null)
 			{
-				var rStatement = SF.ReturnStatement(
+				blocks = blocks.AddStatements(SF.ExpressionStatement(
+					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+						SF.IdentifierName(query),
 					SF.InvocationExpression(
 						SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
 							SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
@@ -53,16 +70,97 @@ namespace Sannel.House.Generator.Generators
 										)
 									)
 								)
-						));
-				method = method.AddBodyStatements(rStatement);
+					)
+					)
+				));
+
 			}
 			else
 			{
-				var rStatement = SF.ReturnStatement(SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
-					SF.IdentifierName("context"),
-					SF.IdentifierName(propertyName)));
-				method = method.AddBodyStatements(rStatement);
+				blocks = blocks.AddStatements(
+						SF.ExpressionStatement(
+							SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+								SF.IdentifierName(query),
+								SF.MemberAccessExpression(SyntaxKind.SimpleAssignmentExpression,
+									SF.IdentifierName("context"),
+									SF.IdentifierName(propertyName)
+								)	
+							)
+						)
+					);
 			}
+
+			var results = SF.Identifier("results");
+
+			blocks = blocks.AddStatements(
+					SF.LocalDeclarationStatement(
+						Extensions.VariableDeclaration(results.Text,
+							SF.EqualsValueClause(
+								SF.ObjectCreationExpression(SF.GenericName("PagedResults")
+									.AddTypeArgumentListArguments(SF.ParseTypeName(t.Name))
+								).AddArgumentListArguments()
+							)
+						)
+					).WithLeadingTrivia(SF.Whitespace(Environment.NewLine)),
+					SF.ExpressionStatement(
+						SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+							results.Text.MemberAccess("TotalResults"),
+							SF.InvocationExpression(
+								query.Text.MemberAccess("LongCount")
+							).AddArgumentListArguments()
+						)
+					),
+					SF.ExpressionStatement(
+						SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+							results.Text.MemberAccess("PageSize"),
+							SF.IdentifierName("pageSize")
+						)
+					),
+					SF.ExpressionStatement(
+						SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+							SF.IdentifierName(query),
+							SF.InvocationExpression(
+								SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
+									SF.InvocationExpression(
+										query.Text.MemberAccess("Skip")
+									).AddArgumentListArguments(
+										SF.Argument(
+											SF.BinaryExpression(SyntaxKind.MultiplyExpression,
+												SF.IdentifierName("page"),
+												results.Text.MemberAccess("PageSize")
+											)
+										)
+									),
+									SF.IdentifierName("Take")
+								)
+							).AddArgumentListArguments(
+								SF.Argument(results.Text.MemberAccess("PageSize"))
+							)
+						)
+					),
+					SF.ExpressionStatement(
+						SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+							results.Text.MemberAccess("Data"),
+							SF.IdentifierName(query)
+						)
+					),
+					SF.ExpressionStatement(
+						SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+							results.Text.MemberAccess("Success"),
+							true.ToLiteral()
+						)
+					),
+					SF.ReturnStatement(SF.IdentifierName(results))
+				);
+
+			/*items = items.Take(results.PageSize).Skip(page * results.PageSize);
+			results.Data = items;
+
+			results.Success = true;
+
+			return results;*/
+
+			method = method.WithBody(blocks);
 
 			return method;
 		}
