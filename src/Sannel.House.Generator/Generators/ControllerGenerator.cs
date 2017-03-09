@@ -38,8 +38,87 @@ namespace Sannel.House.Generator.Generators
 			var dm = props.GetSortProperty(out forward);
 
 			var query = SF.Identifier("query");
+			/*var results = new PagedResults<ApplicationLogEntry>();
+			if(page <= 0)
+			{
+				results.Success = false;
+				results.Errors.Add("Page must be 1 or greater");
+				return results;
+			}
+			if(pageSize <= 1)
+			{
+				results.Success = false;
+				results.Errors.Add("PageSize must be 1 or greater");
+				return results;
+			}
+			IQueryable<ApplicationLogEntry> query;
+			query = context.ApplicationLogEntries.OrderByDescending(i => i.CreatedDate);
+			results.TotalResults = query.LongCount();
+			results.PageSize = pageSize;
+			query = query.Skip((page - 1) * results.PageSize).Take(results.PageSize);
+			results.CurrentPage = page;
+			results.Data = query;
+			results.Success = true;
+			return results;*/
+			var results = SF.Identifier("results");
 
 			var blocks = SF.Block()
+				.AddStatements(
+					SF.LocalDeclarationStatement(
+						Extensions.VariableDeclaration(results.Text,
+							SF.EqualsValueClause(
+								SF.ObjectCreationExpression(SF.GenericName("PagedResults")
+									.AddTypeArgumentListArguments(SF.ParseTypeName(t.Name))
+								).AddArgumentListArguments()
+							)
+						)
+					).WithLeadingTrivia(SF.Whitespace(Environment.NewLine))
+				)
+				.AddStatements(
+					SF.IfStatement(
+						SF.BinaryExpression(SyntaxKind.LessThanOrEqualExpression,
+							SF.IdentifierName("page"),
+							0.ToLiteral()
+						),
+						SF.Block()
+						.AddStatements(
+							SF.ExpressionStatement(
+								SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+									results.Text.MemberAccess("Success"),
+									false.ToLiteral()
+								)
+							),
+							SF.ExpressionStatement(
+								SF.InvocationExpression(
+									results.Text.MemberAccess("Errors", "Add")
+								).AddArgumentListArguments(SF.Argument("Page must be 1 or greater".ToLiteral()))
+							),
+							SF.ReturnStatement(SF.IdentifierName(results))
+						)
+					),
+					SF.IfStatement(
+						SF.BinaryExpression(SyntaxKind.LessThanOrEqualExpression,
+							SF.IdentifierName("pageSize"),
+							0.ToLiteral()
+						),
+						SF.Block()
+						.AddStatements(
+							SF.ExpressionStatement(
+								SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+									results.Text.MemberAccess("Success"),
+									false.ToLiteral()
+								)
+							),
+							SF.ExpressionStatement(
+								SF.InvocationExpression(
+									results.Text.MemberAccess("Errors", "Add")
+								).AddArgumentListArguments(SF.Argument("PageSize must be 1 or greater".ToLiteral()))
+							),
+							SF.ReturnStatement(SF.IdentifierName(results))
+						)
+					)
+
+				)
 				.AddStatements(
 					SF.LocalDeclarationStatement(
 						SF.VariableDeclaration(SF.GenericName("IQueryable")
@@ -90,18 +169,8 @@ namespace Sannel.House.Generator.Generators
 					);
 			}
 
-			var results = SF.Identifier("results");
 
 			blocks = blocks.AddStatements(
-					SF.LocalDeclarationStatement(
-						Extensions.VariableDeclaration(results.Text,
-							SF.EqualsValueClause(
-								SF.ObjectCreationExpression(SF.GenericName("PagedResults")
-									.AddTypeArgumentListArguments(SF.ParseTypeName(t.Name))
-								).AddArgumentListArguments()
-							)
-						)
-					).WithLeadingTrivia(SF.Whitespace(Environment.NewLine)),
 					SF.ExpressionStatement(
 						SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 							results.Text.MemberAccess("TotalResults"),
@@ -126,7 +195,12 @@ namespace Sannel.House.Generator.Generators
 									).AddArgumentListArguments(
 										SF.Argument(
 											SF.BinaryExpression(SyntaxKind.MultiplyExpression,
-												SF.IdentifierName("page"),
+												SF.ParenthesizedExpression(
+													SF.BinaryExpression(SyntaxKind.SubtractExpression,
+														SF.IdentifierName("page"),
+														1.ToLiteral()
+													)
+												),
 												results.Text.MemberAccess("PageSize")
 											)
 										)
@@ -136,6 +210,12 @@ namespace Sannel.House.Generator.Generators
 							).AddArgumentListArguments(
 								SF.Argument(results.Text.MemberAccess("PageSize"))
 							)
+						)
+					),
+					SF.ExpressionStatement(
+						SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+							results.Text.MemberAccess("CurrentPage"),
+							SF.IdentifierName("page")
 						)
 					),
 					SF.ExpressionStatement(
@@ -155,6 +235,7 @@ namespace Sannel.House.Generator.Generators
 
 			/*items = items.Take(results.PageSize).Skip(page * results.PageSize);
 			results.Data = items;
+			results.CurrentPage = page;
 
 			results.Success = true;
 
@@ -1224,15 +1305,6 @@ namespace Sannel.House.Generator.Generators
 			var ga = ti.GetCustomAttribute<GenerationAttribute>() ?? new GenerationAttribute();
 
 			var @class = SF.ClassDeclaration(fileName).AddModifiers(SF.Token(SyntaxKind.PublicKeyword), SF.Token(SyntaxKind.PartialKeyword)).AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName("Controller")));
-
-			@class = @class.AddAttributeLists(SF.AttributeList().AddAttributes(SF.Attribute(
-					SF.IdentifierName("Route")
-				).AddArgumentListArguments(
-					SF.AttributeArgument(
-						SF.LiteralExpression(SyntaxKind.StringLiteralExpression, SF.Literal("api/[controller]"))
-					)
-				)));
-
 
 			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Get))
 			{

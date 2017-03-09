@@ -301,7 +301,50 @@ namespace Sannel.House.Generator.Generators
 			blocks = blocks.AddStatements(generateSeedObject(var3.Text, t.Name, props, "var3", false));
 			blocks = blocks.AddStatements(generateSeedObject(var4.Text, t.Name, props, "var4", false));
 			blocks = blocks.AddStatements(generateSeedObject(var5.Text, t.Name, props, "var5", false));
-			
+
+			var prop = props.GetSortProperty(out bool isForward);
+			if(prop != null)
+			{
+				if (isForward)
+				{
+					int i = 1;
+					blocks = blocks.AddStatements(SF.ExpressionStatement(Extensions.SetPropertyValue(SF.IdentifierName(var5), prop.Name, i.ToLiteral())).WithLeadingTrivia(SF.Comment("// Fix order")));
+					i++;
+					blocks = blocks.AddStatements(SF.ExpressionStatement(Extensions.SetPropertyValue(SF.IdentifierName(var4), prop.Name, i.ToLiteral())));
+					i++;
+					blocks = blocks.AddStatements(SF.ExpressionStatement(Extensions.SetPropertyValue(SF.IdentifierName(var3), prop.Name, i.ToLiteral())));
+					i++;
+					blocks = blocks.AddStatements(SF.ExpressionStatement(Extensions.SetPropertyValue(SF.IdentifierName(var2), prop.Name, i.ToLiteral())));
+					i++;
+					blocks = blocks.AddStatements(SF.ExpressionStatement(Extensions.SetPropertyValue(SF.IdentifierName(var1), prop.Name, i.ToLiteral())));
+				}
+				else
+				{
+					var order = SF.Identifier("order");
+					blocks = blocks.AddStatements(SF.LocalDeclarationStatement(Extensions.VariableDeclaration(order.Text, SF.EqualsValueClause("DateTimeOffset".MemberAccess("Now"))))).WithLeadingTrivia(SF.Comment("// Fix order"));
+
+					blocks = blocks.AddStatements(SF.ExpressionStatement(Extensions.SetPropertyValue(SF.IdentifierName(var1), prop.Name, SF.IdentifierName(order))));
+					blocks = blocks.AddStatements(SF.ExpressionStatement(Extensions.SetPropertyValue(SF.IdentifierName(var2), prop.Name, SF.InvocationExpression(order.Text.MemberAccess("AddDays")).AddArgumentListArguments(SF.Argument((-1).ToLiteral())))));
+					blocks = blocks.AddStatements(SF.ExpressionStatement(Extensions.SetPropertyValue(SF.IdentifierName(var3), prop.Name, SF.InvocationExpression(order.Text.MemberAccess("AddDays")).AddArgumentListArguments(SF.Argument((-2).ToLiteral())))));
+					blocks = blocks.AddStatements(SF.ExpressionStatement(Extensions.SetPropertyValue(SF.IdentifierName(var4), prop.Name, SF.InvocationExpression(order.Text.MemberAccess("AddDays")).AddArgumentListArguments(SF.Argument((-3).ToLiteral())))));
+					blocks = blocks.AddStatements(SF.ExpressionStatement(Extensions.SetPropertyValue(SF.IdentifierName(var5), prop.Name, SF.InvocationExpression(order.Text.MemberAccess("AddDays")).AddArgumentListArguments(SF.Argument((-4).ToLiteral())))));
+				}
+			}
+
+			/*context.ApplicationLogEntries.Add(var1);
+			context.ApplicationLogEntries.Add(var2);
+			context.ApplicationLogEntries.Add(var3);
+			context.ApplicationLogEntries.Add(var4);
+			context.ApplicationLogEntries.Add(var5);
+			wrapper.SaveChanges();*/
+
+			blocks = blocks.AddStatements(SF.ExpressionStatement(SF.InvocationExpression(context.Text.MemberAccess(propertyName, "Add")).AddArgumentListArguments(SF.Argument(SF.IdentifierName(var1))).WithLeadingTrivia(SF.Comment("// Add to database"))));
+			blocks = blocks.AddStatements(SF.ExpressionStatement(SF.InvocationExpression(context.Text.MemberAccess(propertyName, "Add")).AddArgumentListArguments(SF.Argument(SF.IdentifierName(var2)))));
+			blocks = blocks.AddStatements(SF.ExpressionStatement(SF.InvocationExpression(context.Text.MemberAccess(propertyName, "Add")).AddArgumentListArguments(SF.Argument(SF.IdentifierName(var3)))));
+			blocks = blocks.AddStatements(SF.ExpressionStatement(SF.InvocationExpression(context.Text.MemberAccess(propertyName, "Add")).AddArgumentListArguments(SF.Argument(SF.IdentifierName(var4)))));
+			blocks = blocks.AddStatements(SF.ExpressionStatement(SF.InvocationExpression(context.Text.MemberAccess(propertyName, "Add")).AddArgumentListArguments(SF.Argument(SF.IdentifierName(var5)))));
+			blocks = blocks.AddStatements(SF.ExpressionStatement(SF.InvocationExpression(wrapper.Text.MemberAccess("SaveChanges")).AddArgumentListArguments()));
+
 			method = method.WithBody(wrapBlocks(blocks, controllerName));
 
 			return method;
