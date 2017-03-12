@@ -256,35 +256,117 @@ namespace Sannel.House.Generator.Generators
 				return null;
 			}
 
-			var method = SF.MethodDeclaration(SF.ParseTypeName(t.Name), "internalGet")
+			var method = SF.MethodDeclaration(
+				SF.GenericName("Result")
+				.AddTypeArgumentListArguments(
+				SF.ParseTypeName(t.Name)
+				),
+				"internalGet")
 				.AddModifiers(SF.Token(SyntaxKind.PrivateKeyword))
 				.AddParameterListParameters(
 					SF.Parameter(SF.Identifier("id")).WithType(SF.ParseTypeName(key.PropertyType.Name))
 				);
 
-			var rStatement = SF.ReturnStatement(
-				SF.InvocationExpression(
-					SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
-						SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
-							SF.IdentifierName("context"),
-							SF.IdentifierName(propertyName)
-						),
-						SF.IdentifierName("FirstOrDefault")))
-					.AddArgumentListArguments(
-						SF.Argument(
-							SF.SimpleLambdaExpression(
-								SF.Parameter(SF.Identifier("i")),
-								SF.BinaryExpression(SyntaxKind.EqualsExpression,
-									SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
-										SF.IdentifierName("i"),
-										SF.IdentifierName(key.Name)
-										),
-									SF.IdentifierName("id")
+			/*		private Result<Device> internalGet(Int32 id)
+		{
+			var results = new Result<Device>();
+			var data = context.Devices.FirstOrDefault(i => i.Id == id);
+			if(data != null)
+			{
+				results.Success = true;
+				results.Data = data;
+				return results;
+			}
+			else
+			{
+				results.Success = false;
+				results.Errors.Add($"Could not find Device with Id {id}");
+				return results;
+			}
+		}
+*/
+
+			var results = SF.Identifier("results");
+			var data = SF.Identifier("data");
+			var blocks = SF.Block().AddStatements(
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						results.Text,
+						SF.EqualsValueClause(
+							SF.ObjectCreationExpression(
+								SF.GenericName("Result")
+								.AddTypeArgumentListArguments(
+									SF.ParseTypeName(t.Name)
+								)
+							).AddArgumentListArguments()
+						)
+					)
+				),
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						data.Text,
+						SF.EqualsValueClause(
+							context.MemberAccess(propertyName, "FirstOrDefault")
+							.Invoke(
+								SF.Argument(
+									SF.SimpleLambdaExpression(
+										SF.Parameter(SF.Identifier("i")),
+										SF.BinaryExpression(SyntaxKind.EqualsExpression,
+											"i".MemberAccess(key.Name),
+											SF.IdentifierName("id")
+										)
 									)
 								)
 							)
-					));
-			method = method.AddBodyStatements(rStatement);
+						)
+					)
+				)
+			);
+
+			blocks = blocks.AddStatements(
+				SF.IfStatement(
+					SF.BinaryExpression(SyntaxKind.NotEqualsExpression,
+						data.ToIN(),
+						SF.LiteralExpression(SyntaxKind.NullLiteralExpression)
+					),
+					SF.Block()
+					.AddStatements(
+						SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+							results.MemberAccess("Success"),
+							true.ToLiteral()
+						).ToStatement(),
+						SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+							results.MemberAccess("Data"),
+							data.ToIN()
+						).ToStatement(),
+						SF.ReturnStatement(
+							results.ToIN()
+						)
+					)
+				).WithElse(
+					SF.ElseClause(
+						SF.Block()
+						.AddStatements(
+							SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+								results.MemberAccess("Success"),
+								false.ToLiteral()
+							).ToStatement(),
+							results.MemberAccess("Errors", "Add")
+							.Invoke(
+								SF.Argument(
+								$"Could not find {t.Name} with {key.Name} ".ToInterpolatedString(
+									((StringToken)"id").AsInterpolation()
+								))
+							).ToStatement(),
+							SF.ReturnStatement(
+								results.ToIN()
+							)
+						)
+					)
+				)
+			);
+
+			method = method.WithBody(blocks);
 
 
 			return method;

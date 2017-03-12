@@ -630,50 +630,54 @@ namespace Sannel.House.Generator.Generators
 			var blocks = generateSeeds(t, context, propertyName, out var1, out var2, out var3, out props);
 
 			var prop = props.GetKeyProperty();
+			var results = SF.Identifier("results");
 			var actual = SF.Identifier("actual");
+			/*						var results = controller.Get(var1.Id);
+						Assert.NotNull(results);
+						Assert.True(results.Success);
+						var actual = results.Data;
+*/
 			blocks = blocks.AddStatements(
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						results.Text,
+						SF.EqualsValueClause(
+							controller.MemberAccess("Get")
+							.Invoke(
+								SF.Argument(var1.MemberAccess(prop.Name))
+							)
+						)
+					)
+				).WithLeadingTrivia(SF.Comment("// verify")),
+				TestBuilder.AssertIsNotNull(results.ToIN()).ToStatement(),
+				TestBuilder.AssertIsTrue(results.MemberAccess("Success")).ToStatement(),
 				SF.LocalDeclarationStatement(
 					Extensions.VariableDeclaration(
 						actual.Text,
 						SF.EqualsValueClause(
-							SF.InvocationExpression(
-								Extensions.MemberAccess(
-									controller.Text,
-									"Get"
-								)
-							).WithArgumentList(
-								SF.ArgumentList().AddArguments(
-									SF.Argument(Extensions.MemberAccess(var1.Text, prop.Name))
-								)
-							)
+							results.MemberAccess("Data")
 						)
 					)
-				).WithLeadingTrivia(SF.Comment("// verify"))
+				)
 			);
 
-			blocks = blocks.AddStatements(SF.ExpressionStatement(
-				TestBuilder.AssertIsNotNull(Extensions.MemberAccess(actual.Text, prop.Name))
-			));
 
 			blocks = blocks.AddStatements(generateCompare(var1, actual, props));
 
 			blocks = blocks.AddStatements(
-				SF.ExpressionStatement(
-					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
-						SF.IdentifierName(actual),
-						SF.InvocationExpression(
-							Extensions.MemberAccess(
-								controller.Text,
-								"Get"
-							)
-						).WithArgumentList(
-							SF.ArgumentList()
-							.AddArguments(
-									SF.Argument(Extensions.MemberAccess(var2.Text, prop.Name))
-							)
-						)
+				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					results.ToIN(),
+					controller.MemberAccess("Get")
+					.Invoke(
+						SF.Argument(var2.MemberAccess(prop.Name))
 					)
-				).WithLeadingTrivia(SF.Comment($"// Verify {var2.Text}"))
+				).WithLeadingTrivia(SF.Comment($"// verify {var2}")).ToStatement(),
+				TestBuilder.AssertIsNotNull(results.ToIN()).ToStatement(),
+				TestBuilder.AssertIsTrue(results.MemberAccess("Success")).ToStatement(),
+				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+						actual.ToIN(),
+						results.MemberAccess("Data")
+				).ToStatement()
 			);
 
 			blocks = blocks.AddStatements(SF.ExpressionStatement(
@@ -682,22 +686,19 @@ namespace Sannel.House.Generator.Generators
 			blocks = blocks.AddStatements(generateCompare(var2, actual, props));
 
 			blocks = blocks.AddStatements(
-				SF.ExpressionStatement(
-					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
-						SF.IdentifierName(actual),
-						SF.InvocationExpression(
-							Extensions.MemberAccess(
-								controller.Text,
-								"Get"
-							)
-						).WithArgumentList(
-							SF.ArgumentList()
-							.AddArguments(
-									SF.Argument(Extensions.MemberAccess(var3.Text, prop.Name))
-							)
-						)
+				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					results.ToIN(),
+					controller.MemberAccess("Get")
+					.Invoke(
+						SF.Argument(var3.MemberAccess(prop.Name))
 					)
-				).WithLeadingTrivia(SF.Comment($"// Verify {var3.Text}"))
+				).WithLeadingTrivia(SF.Comment($"// verify {var3}")).ToStatement(),
+				TestBuilder.AssertIsNotNull(results.ToIN()).ToStatement(),
+				TestBuilder.AssertIsTrue(results.MemberAccess("Success")).ToStatement(),
+				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+						actual.ToIN(),
+						results.MemberAccess("Data")
+				).ToStatement()
 			);
 
 			blocks = blocks.AddStatements(SF.ExpressionStatement(
@@ -705,7 +706,36 @@ namespace Sannel.House.Generator.Generators
 			));
 			blocks = blocks.AddStatements(generateCompare(var3, actual, props));
 
-			method = method.AddBodyStatements(wrapBlocks(blocks, controllerName));
+			/*						results = controller.Get(default(int));
+						Assert.NotNull(results);
+						Assert.False(results.Success);
+						Assert.Equal(1, results.Errors.Count);
+						Assert.Equal($"Could not find Device with Id {default(int)}", results.Errors[0]);
+*/
+			blocks = blocks.AddStatements(
+				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					results.ToIN(),
+					controller.MemberAccess("Get")
+					.Invoke(
+						SF.Argument(SF.ParseTypeName(prop.PropertyType.Name).GetDefaultValue())
+					)
+				).WithLeadingTrivia(SF.Comment("// Failed Test")).ToStatement(),
+				TestBuilder.AssertIsNotNull(results.ToIN()).ToStatement(),
+				TestBuilder.AssertIsFalse(results.MemberAccess("Success")).ToStatement(),
+				TestBuilder.AssertAreEqual(1.ToLiteral(), results.MemberAccess("Errors", "Count")).ToStatement(),
+				TestBuilder.AssertAreEqual(
+					$"Could not find {t.Name} with {prop.Name} ".ToInterpolatedString(
+						((StringToken)(SF.ParseTypeName(prop.PropertyType.Name).GetDefaultValue().ToString())).AsInterpolation()
+					),
+					SF.ElementAccessExpression(
+						results.MemberAccess("Errors")
+					).AddArgumentListArguments(
+						SF.Argument(0.ToLiteral())
+					)
+				).ToStatement()
+			);
+
+			method = method.WithBody(wrapBlocks(blocks, controllerName));
 
 			return method;
 		}
