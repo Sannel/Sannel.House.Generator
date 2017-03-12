@@ -406,6 +406,27 @@ namespace Sannel.House.Generator
 
 		}
 
+		/// <summary>
+		/// Converts syntaxToken to IdentifierName
+		/// </summary>
+		/// <param name="token"></param>
+		/// <returns></returns>
+		public static SimpleNameSyntax ToIN(this SyntaxToken token)
+		{
+			return SF.IdentifierName(token);
+		}
+
+		public static ExpressionStatementSyntax ToStatement(this ExpressionSyntax es)
+		{
+			return SF.ExpressionStatement(es);
+		}
+
+		public static InvocationExpressionSyntax Invoke(this MemberAccessExpressionSyntax memberAccess, params ArgumentSyntax[] arguments)
+		{
+			return SF.InvocationExpression(memberAccess)
+				.AddArgumentListArguments(arguments);
+		}
+
 		public static MemberAccessExpressionSyntax MemberAccess(String name, String property)
 		{
 			return MemberAccess(SF.IdentifierName(name), SF.IdentifierName(property));
@@ -435,6 +456,11 @@ namespace Sannel.House.Generator
 		public static MemberAccessExpressionSyntax MemberAccess(this ExpressionSyntax left, SimpleNameSyntax right)
 		{
 			return SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, left, right);
+		}
+
+		public static MemberAccessExpressionSyntax MemberAccess(this SyntaxToken left, String right, params String[] extra)
+		{
+			return MemberAccess(SF.IdentifierName(left), SF.IdentifierName(right), extra?.Select(i => SF.IdentifierName(i))?.ToArray());
 		}
 
 		public static bool ShouldIgnore(this PropertyInfo pi)
@@ -476,35 +502,75 @@ namespace Sannel.House.Generator
 			return att != null && att.CantUpdate;
 		}
 
+		public static ArgumentSyntax ToArgument(this int number)
+		{
+			return SF.Argument(number.ToLiteral());
+		}
+
 		public static LiteralExpressionSyntax ToLiteral(this int number)
 		{
 			return SF.LiteralExpression(SyntaxKind.NumericLiteralExpression, SF.Literal(number));
 		}
+		public static ArgumentSyntax ToArgument(this short number)
+		{
+			return SF.Argument(number.ToLiteral());
+		}
+
 		public static LiteralExpressionSyntax ToLiteral(this short number)
 		{
 			return SF.LiteralExpression(SyntaxKind.NumericLiteralExpression, SF.Literal(number));
+		}
+
+		public static ArgumentSyntax ToArgument(this long number)
+		{
+			return SF.Argument(number.ToLiteral());
 		}
 
 		public static LiteralExpressionSyntax ToLiteral(this long number)
 		{
 			return SF.LiteralExpression(SyntaxKind.NumericLiteralExpression, SF.Literal(number));
 		}
+		public static ArgumentSyntax ToArgument(this float number)
+		{
+			return SF.Argument(number.ToLiteral());
+		}
+
 		public static LiteralExpressionSyntax ToLiteral(this float number)
 		{
 			return SF.LiteralExpression(SyntaxKind.NumericLiteralExpression, SF.Literal(number));
 		}
+		public static ArgumentSyntax ToArgument(this double number)
+		{
+			return SF.Argument(number.ToLiteral());
+		}
+
 		public static LiteralExpressionSyntax ToLiteral(this double number)
 		{
 			return SF.LiteralExpression(SyntaxKind.NumericLiteralExpression, SF.Literal(number));
 		}
+		public static ArgumentSyntax ToArgument(this decimal number)
+		{
+			return SF.Argument(number.ToLiteral());
+		}
+
 		public static LiteralExpressionSyntax ToLiteral(this decimal number)
 		{
 			return SF.LiteralExpression(SyntaxKind.NumericLiteralExpression, SF.Literal(number));
 		}
 
+		public static ArgumentSyntax ToArgument(this String number)
+		{
+			return SF.Argument(number.ToLiteral());
+		}
+
 		public static LiteralExpressionSyntax ToLiteral(this String value)
 		{
 			return SF.LiteralExpression(SyntaxKind.StringLiteralExpression, SF.Literal(value));
+		}
+
+		public static ArgumentSyntax ToArgument(this bool number)
+		{
+			return SF.Argument(number.ToLiteral());
 		}
 
 		public static LiteralExpressionSyntax ToLiteral(this bool value)

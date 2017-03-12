@@ -214,6 +214,8 @@ namespace Sannel.House.Generator.Generators
 				)
 					);
 
+			
+
 			return blocks;
 		}
 
@@ -331,19 +333,278 @@ namespace Sannel.House.Generator.Generators
 				}
 			}
 
-			/*context.ApplicationLogEntries.Add(var1);
-			context.ApplicationLogEntries.Add(var2);
-			context.ApplicationLogEntries.Add(var3);
-			context.ApplicationLogEntries.Add(var4);
-			context.ApplicationLogEntries.Add(var5);
-			wrapper.SaveChanges();*/
-
 			blocks = blocks.AddStatements(SF.ExpressionStatement(SF.InvocationExpression(context.Text.MemberAccess(propertyName, "Add")).AddArgumentListArguments(SF.Argument(SF.IdentifierName(var1))).WithLeadingTrivia(SF.Comment("// Add to database"))));
 			blocks = blocks.AddStatements(SF.ExpressionStatement(SF.InvocationExpression(context.Text.MemberAccess(propertyName, "Add")).AddArgumentListArguments(SF.Argument(SF.IdentifierName(var2)))));
 			blocks = blocks.AddStatements(SF.ExpressionStatement(SF.InvocationExpression(context.Text.MemberAccess(propertyName, "Add")).AddArgumentListArguments(SF.Argument(SF.IdentifierName(var3)))));
 			blocks = blocks.AddStatements(SF.ExpressionStatement(SF.InvocationExpression(context.Text.MemberAccess(propertyName, "Add")).AddArgumentListArguments(SF.Argument(SF.IdentifierName(var4)))));
 			blocks = blocks.AddStatements(SF.ExpressionStatement(SF.InvocationExpression(context.Text.MemberAccess(propertyName, "Add")).AddArgumentListArguments(SF.Argument(SF.IdentifierName(var5)))));
 			blocks = blocks.AddStatements(SF.ExpressionStatement(SF.InvocationExpression(wrapper.Text.MemberAccess("SaveChanges")).AddArgumentListArguments()));
+
+			var paged = SF.Identifier("paged");
+			// Error Tests
+			blocks = blocks.AddStatements(
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						paged.Text, 
+						SF.EqualsValueClause(SF.InvocationExpression(controller.Text.MemberAccess("GetPaged"))
+							.AddArgumentListArguments(
+								SF.Argument(0.ToLiteral()),
+								SF.Argument(2.ToLiteral())
+							)
+						)
+					).WithLeadingTrivia(SF.Comment("// Call with invalid page number"))
+				),
+				SF.ExpressionStatement(
+					TestBuilder.AssertIsNotNull(SF.IdentifierName(paged))
+				),
+				SF.ExpressionStatement(
+					TestBuilder.AssertIsFalse(paged.Text.MemberAccess("Success"))
+				),
+				SF.ExpressionStatement(
+					TestBuilder.AssertAreEqual(1.ToLiteral(), paged.MemberAccess("Errors", "Count"))
+				),
+				SF.ExpressionStatement(
+					TestBuilder.AssertAreEqual("Page must be 1 or greater".ToLiteral(),
+						SF.ElementAccessExpression(
+							paged.MemberAccess("Errors")
+						).AddArgumentListArguments(
+							SF.Argument(0.ToLiteral())
+						)
+					)
+				)
+			);
+
+			blocks = blocks.AddStatements(
+				SF.ExpressionStatement(
+					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+						paged.ToIN(),
+						SF.InvocationExpression(
+							controller.MemberAccess("GetPaged")
+						).AddArgumentListArguments(
+							SF.Argument(1.ToLiteral()),
+							SF.Argument(0.ToLiteral())
+						)
+					).WithLeadingTrivia(SF.Comment("// Invalid PageSize"))
+				),
+				SF.ExpressionStatement(
+					TestBuilder.AssertIsNotNull(paged.ToIN())
+				),
+				SF.ExpressionStatement(
+					TestBuilder.AssertIsFalse(paged.MemberAccess("Success"))
+				),
+				SF.ExpressionStatement(
+					TestBuilder.AssertAreEqual(1.ToLiteral(), paged.MemberAccess("Errors", "Count"))
+				),
+				SF.ExpressionStatement(
+					TestBuilder.AssertAreEqual("PageSize must be 1 or greater".ToLiteral(),
+						SF.ElementAccessExpression(
+							paged.MemberAccess("Errors")
+						).AddArgumentListArguments(
+							SF.Argument(0.ToLiteral())
+						)
+					)
+				)
+			);
+			/*paged = controller.GetPaged(1, 2);
+					Assert.NotNull(paged);
+					Assert.True(paged.Success);
+					Assert.Equal(5, paged.TotalResults);
+					Assert.Equal(2, paged.PageSize);
+					Assert.Equal(1, paged.CurrentPage);
+					Assert.NotNull(paged.Data);
+					var list = paged.Data.ToList();
+					Assert.Equal(2, list.Count);
+					var actual = list[0]; // var1
+					// common test
+					actual = list[1]; // var2
+					// common test*/
+			var list = SF.Identifier("list");
+			var actual = SF.Identifier("actual");
+
+			SyntaxToken aVar1, aVar2, aVar3, aVar4, aVar5;
+
+			if (isForward)
+			{
+				aVar1 = var5;
+				aVar2 = var4;
+				aVar3 = var3;
+				aVar4 = var2;
+				aVar5 = var1;
+			}
+			else
+			{
+				aVar1 = var1;
+				aVar2 = var2;
+				aVar3 = var3;
+				aVar4 = var4;
+				aVar5 = var5;
+			}
+
+
+			blocks = blocks.AddStatements(
+				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					paged.ToIN(),
+					controller.MemberAccess("GetPaged")
+						.Invoke(
+							1.ToArgument(),
+							2.ToArgument()
+						)
+				).WithLeadingTrivia(SF.Comment("// Success Tests")).ToStatement(),
+				TestBuilder.AssertIsNotNull(
+					paged.ToIN()
+				).ToStatement(),
+				TestBuilder.AssertIsTrue(
+					paged.MemberAccess("Success")
+				).ToStatement(),
+				TestBuilder.AssertAreEqual(
+					5.ToLiteral(),
+					paged.MemberAccess("TotalResults")
+				).ToStatement(),
+				TestBuilder.AssertAreEqual(
+					2.ToLiteral(),
+					paged.MemberAccess("PageSize")
+				).ToStatement(),
+				TestBuilder.AssertAreEqual(
+					1.ToLiteral(),
+					paged.MemberAccess("CurrentPage")
+				).ToStatement(),
+				TestBuilder.AssertIsNotNull(
+					paged.MemberAccess("Data")
+				).ToStatement(),
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						list.Text,
+						SF.EqualsValueClause(
+							paged.MemberAccess("Data", "ToList").Invoke()
+						)
+					)
+				),
+				TestBuilder.AssertAreEqual(2.ToLiteral(), list.MemberAccess("Count")).ToStatement(),
+				SF.LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						actual.Text,
+						SF.EqualsValueClause(
+						SF.ElementAccessExpression(
+							list.ToIN()
+						).AddArgumentListArguments(0.ToArgument())
+						)
+					).WithLeadingTrivia(SF.Comment($"// {aVar1}"))
+				)
+			);
+
+			blocks = blocks.AddStatements(generateCompare(aVar1, actual, props));
+			blocks = blocks.AddStatements(
+				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					actual.ToIN(),
+					SF.ElementAccessExpression(
+						list.ToIN()
+					).AddArgumentListArguments(1.ToArgument())
+				).WithLeadingTrivia(SF.Comment($"// {aVar2}")).ToStatement()
+			);
+			blocks = blocks.AddStatements(generateCompare(aVar2, actual, props));
+
+			blocks = blocks.AddStatements(
+				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					paged.ToIN(),
+					controller.MemberAccess("GetPaged")
+						.Invoke(
+							2.ToArgument(),
+							2.ToArgument()
+						)
+				).WithLeadingTrivia(SF.Comment("// Success Tests")).ToStatement(),
+				TestBuilder.AssertIsNotNull(
+					paged.ToIN()
+				).ToStatement(),
+				TestBuilder.AssertIsTrue(
+					paged.MemberAccess("Success")
+				).ToStatement(),
+				TestBuilder.AssertAreEqual(
+					5.ToLiteral(),
+					paged.MemberAccess("TotalResults")
+				).ToStatement(),
+				TestBuilder.AssertAreEqual(
+					2.ToLiteral(),
+					paged.MemberAccess("PageSize")
+				).ToStatement(),
+				TestBuilder.AssertAreEqual(
+					2.ToLiteral(),
+					paged.MemberAccess("CurrentPage")
+				).ToStatement(),
+				TestBuilder.AssertIsNotNull(
+					paged.MemberAccess("Data")
+				).ToStatement(),
+				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					list.ToIN(),
+					paged.MemberAccess("Data", "ToList").Invoke()
+				).ToStatement(),
+				TestBuilder.AssertAreEqual(2.ToLiteral(), list.MemberAccess("Count")).ToStatement(),
+				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					actual.ToIN(),
+					SF.ElementAccessExpression(
+						list.ToIN()
+					).AddArgumentListArguments(
+						0.ToArgument()
+					)
+				).WithLeadingTrivia(SF.Comment($"// {aVar3}")).ToStatement()
+			);
+
+			blocks = blocks.AddStatements(generateCompare(aVar3, actual, props));
+			blocks = blocks.AddStatements(
+				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					actual.ToIN(),
+					SF.ElementAccessExpression(
+						list.ToIN()
+					).AddArgumentListArguments(1.ToArgument())
+				).WithLeadingTrivia(SF.Comment($"// {aVar4}")).ToStatement()
+			);
+			blocks = blocks.AddStatements(generateCompare(aVar4, actual, props));
+
+			blocks = blocks.AddStatements(
+				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					paged.ToIN(),
+					controller.MemberAccess("GetPaged")
+						.Invoke(
+							3.ToArgument(),
+							2.ToArgument()
+						)
+				).WithLeadingTrivia(SF.Comment("// Success Tests")).ToStatement(),
+				TestBuilder.AssertIsNotNull(
+					paged.ToIN()
+				).ToStatement(),
+				TestBuilder.AssertIsTrue(
+					paged.MemberAccess("Success")
+				).ToStatement(),
+				TestBuilder.AssertAreEqual(
+					5.ToLiteral(),
+					paged.MemberAccess("TotalResults")
+				).ToStatement(),
+				TestBuilder.AssertAreEqual(
+					2.ToLiteral(),
+					paged.MemberAccess("PageSize")
+				).ToStatement(),
+				TestBuilder.AssertAreEqual(
+					3.ToLiteral(),
+					paged.MemberAccess("CurrentPage")
+				).ToStatement(),
+				TestBuilder.AssertIsNotNull(
+					paged.MemberAccess("Data")
+				).ToStatement(),
+				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					list.ToIN(),
+					paged.MemberAccess("Data", "ToList").Invoke()
+				).ToStatement(),
+				TestBuilder.AssertAreEqual(1.ToLiteral(), list.MemberAccess("Count")).ToStatement(),
+				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					actual.ToIN(),
+					SF.ElementAccessExpression(
+						list.ToIN()
+					).AddArgumentListArguments(
+						0.ToArgument()
+					)
+				).WithLeadingTrivia(SF.Comment($"// {aVar5}")).ToStatement()
+			);
+
+			blocks = blocks.AddStatements(generateCompare(aVar5, actual, props));
 
 			method = method.WithBody(wrapBlocks(blocks, controllerName));
 
