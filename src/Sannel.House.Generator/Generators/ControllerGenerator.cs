@@ -1124,7 +1124,12 @@ namespace Sannel.House.Generator.Generators
 								SF.IdentifierName("SaveChanges")
 							)
 						).AddArgumentListArguments()
-					)
+					),
+					// result.Data = current;
+					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+						result.MemberAccess("Data"),
+						current.ToIN()
+					).ToStatement()
 				)
 				.AddCatches(
 					SF.CatchClause()
