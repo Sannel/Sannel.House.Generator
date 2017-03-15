@@ -12,12 +12,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Sannel.House.Web\src\Sannel.House.Web.Base\Sannel.House.Web.Base.csproj" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="1.1.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="1.3.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="1.1.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="1.3.2" />
+    <ProjectReference Include="..\Sannel.House.Web\src\Sannel.House.Web.Base\Sannel.House.Web.Base.csproj" />
   </ItemGroup>
 
 </Project>

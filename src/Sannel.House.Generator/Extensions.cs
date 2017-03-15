@@ -180,8 +180,31 @@ namespace Sannel.House.Generator
 					}
 					return value.ToString().ToLiteral();
 
+				case "DateTime":
+					return SF.ObjectCreationExpression(SF.ParseTypeName("DateTimeOffset"))
+						.AddArgumentListArguments(
+							SF.Argument(rand.Next(1980, 2016).ToLiteral()), // Year
+							SF.Argument(rand.Next(1,12).ToLiteral()), // Month
+							SF.Argument(rand.Next(1, 28).ToLiteral()), // Day
+							SF.Argument(rand.Next(1,24).ToLiteral()), // Hour
+							SF.Argument(rand.Next(1, 60).ToLiteral()), // Minutes
+							SF.Argument(rand.Next(1, 60).ToLiteral()), // seconds
+							SF.Argument(
+								SF.InvocationExpression(
+									Extensions.MemberAccess(
+										SF.IdentifierName("TimeSpan"),
+										SF.IdentifierName("FromHours")
+									)
+								)
+								.AddArgumentListArguments(
+									SF.Argument(
+										rand.Next(-7, -4).ToLiteral()
+									)
+								)
+						));
+
 				case "DateTimeOffset":
-					new DateTimeOffset(2000, 2, 3, 3, 12, 13, TimeSpan.FromHours(-6));
+					//new DateTimeOffset(2000, 2, 3, 3, 12, 13, TimeSpan.FromHours(-6));
 					return SF.ObjectCreationExpression(SF.ParseTypeName("DateTimeOffset"))
 						.AddArgumentListArguments(
 							SF.Argument(rand.Next(1980, 2016).ToLiteral()), // Year
@@ -262,6 +285,9 @@ namespace Sannel.House.Generator
 						SF.IdentifierName("DateTimeOffset"),
 						SF.IdentifierName("MinValue"));
 
+				case "DateTime":
+					return "DateTime".MemberAccess("MinValue");
+
 				case "String":
 					return SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
 						SF.IdentifierName("String"),
@@ -341,7 +367,7 @@ namespace Sannel.House.Generator
 				}
 				return SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
 					SF.IdentifierName("DateTime"),
-					SF.IdentifierName("Min"));
+					SF.IdentifierName("MinValue"));
 			}
 			if (t == typeof(DateTimeOffset) || t == typeof(DateTimeOffset?))
 			{

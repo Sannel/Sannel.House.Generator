@@ -148,11 +148,7 @@ namespace Sannel.House.Generator.Generators
 				}
 				else
 				{
-					String dtType = "DateTimeOffset";
-					if (prop.PropertyType == typeof(DateTime) || prop.PropertyType == typeof(DateTime?))
-					{
-						dtType = "DateTime";
-					}
+					String dtType = "DateTime";
 					var order = SF.Identifier("order");
 					blocks = blocks.AddStatements(SF.LocalDeclarationStatement(Extensions.VariableDeclaration(order.Text, SF.EqualsValueClause(Extensions.MemberAccess(dtType, "Now"))))
 						.WithLeadingTrivia(SF.Comment("//Fix Order")));
@@ -323,7 +319,7 @@ namespace Sannel.House.Generator.Generators
 				else
 				{
 					var order = SF.Identifier("order");
-					blocks = blocks.AddStatements(SF.LocalDeclarationStatement(Extensions.VariableDeclaration(order.Text, SF.EqualsValueClause("DateTimeOffset".MemberAccess("Now"))))).WithLeadingTrivia(SF.Comment("// Fix order"));
+					blocks = blocks.AddStatements(SF.LocalDeclarationStatement(Extensions.VariableDeclaration(order.Text, SF.EqualsValueClause("DateTime".MemberAccess("Now"))))).WithLeadingTrivia(SF.Comment("// Fix order"));
 
 					blocks = blocks.AddStatements(SF.ExpressionStatement(Extensions.SetPropertyValue(SF.IdentifierName(var1), prop.Name, SF.IdentifierName(order))));
 					blocks = blocks.AddStatements(SF.ExpressionStatement(Extensions.SetPropertyValue(SF.IdentifierName(var2), prop.Name, SF.InvocationExpression(order.Text.MemberAccess("AddDays")).AddArgumentListArguments(SF.Argument((-1).ToLiteral())))));
