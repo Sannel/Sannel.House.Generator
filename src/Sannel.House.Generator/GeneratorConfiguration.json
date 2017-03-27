@@ -31,6 +31,10 @@
 		"ICreateGenerator": {
 			"Type": "Combined",
 			"Class":  "Sannel.House.Generator.Generators.ICreateGenerator"
+		},
+		"SDKModelsGenerator":  {
+			"Type":  "PerType",
+			"Class":  "Sannel.House.Generator.Generators.SDKModelsGenerator"
 		}
 	},
 	"TestBuilders":  {
@@ -73,6 +77,14 @@
 			"Generator":  "ControllerTestsGenerator",
 			"TestBuilder": "XUnit",
 			"HttpBuilder": null
+		},
+		{
+			"Name":  "SDK Models",
+			"Directory":  "SDK\\Models",
+			"FileName":  "{TypeName}.Generated.cs",
+			"Generator":  "SDKModelsGenerator",
+			"TestBuilder":  null,
+			"HttpBuilder":  null
 		},
 		{
 			"Name":  "Server Interfaces",
