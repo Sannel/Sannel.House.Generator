@@ -35,6 +35,10 @@
 		"SDKModelsGenerator":  {
 			"Type":  "PerType",
 			"Class":  "Sannel.House.Generator.Generators.SDKModelsGenerator"
+		},
+		"ServerTypeContextGenerator": {
+			"Type":  "PerType",
+			"Class":  "Sannel.House.Generator.Generators.ServerContextTypesGenerator"
 		}
 	},
 	"TestBuilders":  {
@@ -111,52 +115,31 @@
 			"HttpBuilder": null
 		},
 		{
-			"Name":  "Server Context Generator (UWP)",
-			"Directory":  "ServerSDK\\UWP",
-			"FileName":  "ServerContext.Generator.cs",
-			"Generator":  "ServerContextGenerator",
-			"TestBuilder":  null,
-			"HttpBuilder": "UWPHttpBuilder",
-			"TaskBuilder":  "UWPTaskBuilder",
-			"Variables": {
-				"IsUWP":  "1"
-			}
-		},
-		{
-			"Name":  "Server Context Generator (Portable)",
-			"Directory":  "ServerSDK\\Portable",
-			"FileName":  "ServerContext.Generator.cs",
+			"Name":  "Server Context Generator",
+			"Directory":  "SDK",
+			"FileName":  "ServerContext.Generated.cs",
 			"Generator":  "ServerContextGenerator",
 			"TestBuilder":  null,
 			"HttpBuilder": "HttpBuilder",
-			"TaskBuilder":  "TaskBuilder",
-			"Variables":  {
-				"IsUWP":  "0"
-			}
+			"TaskBuilder":  "TaskBuilder"
 		},
 		{
-			"Name":  "Server Context Tests Generator (UWP)",
-			"Directory":  "ServerSDK\\Tests\\UWP",
-			"FileName":  "ServerContextTests.Generated.cs",
-			"Generator":  "ServerContextTestsGenerator",
-			"TestBuilder":  "UWPUnit",
-			"HttpBuilder":  "UWPHttpBuilder",
-			"TaskBuilder":  "UWPTaskBuilder",
-			"Variables":  {
-				"IsUWP":  "1"
-			}
+			"Name":  "Server Context Type Generator",
+			"Directory": "SDK\\Context",
+			"FileName":  "{TypeName}Context.Generated.cs",
+			"Generator": "ServerTypeContextGenerator",
+			"TestBuilder":  null,
+			"HttpBuilder":  "HttpBuilder",
+			"TaskBuilder":  "TaskBuilder"
 		},
 		{
-			"Name":  "Server Context Tests Generator (Portable)",
-			"Directory":  "ServerSDK\\Tests\\Portable",
+			"Name":  "Server Context Tests Generator",
+			"Directory":  "SDK\\Tests",
 			"FileName":  "ServerContextTests.Generated.cs",
 			"Generator":  "ServerContextTestsGenerator",
 			"TestBuilder":  "XUnit",
 			"HttpBuilder":  "HttpBuilder",
-			"TaskBuilder":  "TaskBuilder",
-			"Variables":  {
-				"IsUWP":  "1"
-			}
+			"TaskBuilder":  "TaskBuilder"
 		},
 		{
 			"Name": "ICreate Generator",

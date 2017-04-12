@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Sannel.House.Web.Base;
 
 namespace Sannel.House.Generator.Common
 {

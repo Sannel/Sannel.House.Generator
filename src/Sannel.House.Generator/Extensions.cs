@@ -105,6 +105,11 @@ namespace Sannel.House.Generator
 
 			Type t = info.PropertyType;
 
+			return t.GetTypeSyntax();
+		}
+
+		public static TypeSyntax GetTypeSyntax(this Type t)
+		{
 			if (t.GenericTypeArguments != null && t.GenericTypeArguments.Length > 0)
 			{
 				if (String.Compare(t.Name, "Nullable`1") == 0)
