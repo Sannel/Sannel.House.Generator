@@ -221,7 +221,12 @@ namespace Sannel.House.Generator.Generators
 					SF.ExpressionStatement(
 						SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 							results.Text.MemberAccess("Data"),
-							SF.IdentifierName(query)
+							SF.InvocationExpression(
+								Extensions.MemberAccess(
+									SF.IdentifierName(query),
+									SF.IdentifierName("AsNoTracking")
+								)
+							).AddArgumentListArguments()
 						)
 					),
 					SF.ExpressionStatement(
@@ -1386,6 +1391,7 @@ namespace Sannel.House.Generator.Generators
 			unit = unit.AddUsings(SF.UsingDirective(SF.IdentifierName("Sannel.House.Web.Base.Models")));
 			unit = unit.AddUsings(SF.UsingDirective(SF.IdentifierName("Sannel.House.Web.Base.Interfaces")));
 			unit = unit.AddUsing("Microsoft.Extensions.Logging");
+			unit = unit.AddUsing("Microsoft.EntityFrameworkCore");
 
 
 			var ti = t.GetTypeInfo();
