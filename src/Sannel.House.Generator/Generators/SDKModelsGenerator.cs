@@ -49,9 +49,9 @@ namespace Sannel.House.Generator.Generators
 					.WithExpressionBody(
 						ArrowExpressionClause(
 							InvocationExpression(
-								IdentifierName("Get")
+								IdentifierName("Set")
 							).AddArgumentListArguments(
-								Argument(IdentifierName(field.Text)),
+								Argument(IdentifierName(field.Text)).WithRefOrOutKeyword(Token(SyntaxKind.RefKeyword)),
 								Argument(IdentifierName("value"))
 							)
 						)

@@ -20,9 +20,9 @@
 			"Type":  "PerType",
 			"Class":  "Sannel.House.Generator.Generators.ResultsGenerator"
 		},
-		"ServerContextGenerator":  {
+		"SDKServerContextGenerator":  {
 			"Type":  "Combined",
-			"Class":  "Sannel.House.Generator.Generators.ServerContextGenerator"
+			"Class":  "Sannel.House.Generator.Generators.SDKServerContextGenerator"
 		},
 		"ServerContextTestsGenerator":  {
 			"Type":  "Combined",
@@ -36,9 +36,9 @@
 			"Type":  "PerType",
 			"Class":  "Sannel.House.Generator.Generators.SDKModelsGenerator"
 		},
-		"ServerTypeContextGenerator": {
+		"SDKServerTypeContextGenerator": {
 			"Type":  "PerType",
-			"Class":  "Sannel.House.Generator.Generators.ServerContextTypesGenerator"
+			"Class":  "Sannel.House.Generator.Generators.SDKServerContextTypesGenerator"
 		}
 	},
 	"TestBuilders":  {
@@ -118,7 +118,7 @@
 			"Name":  "Server Context Generator",
 			"Directory":  "SDK",
 			"FileName":  "ServerContext.Generated.cs",
-			"Generator":  "ServerContextGenerator",
+			"Generator":  "SDKServerContextGenerator",
 			"TestBuilder":  null,
 			"HttpBuilder": "HttpBuilder",
 			"TaskBuilder":  "TaskBuilder"
@@ -127,7 +127,7 @@
 			"Name":  "Server Context Type Generator",
 			"Directory": "SDK\\Context",
 			"FileName":  "{TypeName}Context.Generated.cs",
-			"Generator": "ServerTypeContextGenerator",
+			"Generator": "SDKServerTypeContextGenerator",
 			"TestBuilder":  null,
 			"HttpBuilder":  "HttpBuilder",
 			"TaskBuilder":  "TaskBuilder"

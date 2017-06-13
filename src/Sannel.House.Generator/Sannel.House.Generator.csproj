@@ -20,4 +20,10 @@
     <ProjectReference Include="..\Sannel.House.Web\src\Sannel.House.Web.Base\Sannel.House.Web.Base.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="GeneratorConfiguration.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

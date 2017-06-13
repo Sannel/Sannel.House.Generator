@@ -179,6 +179,9 @@ namespace Sannel.House.Generator
 					generator.Generate(propWithNames, path, r);
 				}
 			}
+
+			Console.WriteLine("Done");
+			Console.ReadKey();
 		}
 	}
 }

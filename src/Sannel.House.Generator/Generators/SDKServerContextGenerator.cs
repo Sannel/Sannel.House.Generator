@@ -26,7 +26,7 @@ using Sannel.House.Generator.Common;
 
 namespace Sannel.House.Generator.Generators
 {
-	public class ServerContextGenerator : ICombinedGenerator
+	public class SDKServerContextGenerator : ICombinedGenerator
 	{
 		private SyntaxToken keyName = Identifier("key");
 		private SyntaxToken helperName = Identifier("helper");
