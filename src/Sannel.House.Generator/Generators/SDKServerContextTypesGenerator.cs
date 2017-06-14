@@ -19,6 +19,8 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using System.Reflection;
+using Sannel.House.Web.Base;
 
 namespace Sannel.House.Generator.Generators
 {
@@ -42,6 +44,35 @@ namespace Sannel.House.Generator.Generators
 
 			return @class.AddMembers(cons.WithBody(blocks));
 		}
+
+		private MethodDeclarationSyntax generatePagedMethod(Type t)
+		{
+			var method = MethodDeclaration(GenericName("PagedResults").AddTypeArgumentListArguments(ParseTypeName(t.Name)), "GetPaged")
+							.AddModifiers(Token(SyntaxKind.PublicKeyword));
+
+			var blocks = Block(ReturnStatement(InvocationExpression(IdentifierName("GetPaged")).AddArgumentListArguments(Argument(1.ToLiteral()))));
+
+			return method.WithBody(blocks);
+		}
+
+		private MethodDeclarationSyntax generatePagedMethodWithPage(Type t)
+		{
+
+			var method = MethodDeclaration(GenericName("PagedResults").AddTypeArgumentListArguments(ParseTypeName(t.Name)), "GetPaged")
+							.AddModifiers(Token(SyntaxKind.PublicKeyword))
+							.AddParameterListParameters(
+								Parameter(Identifier("page")).WithType(ParseTypeName("int"))
+							);
+
+			var blocks = Block(ReturnStatement(InvocationExpression(IdentifierName("GetPaged"))
+				.AddArgumentListArguments(
+					Argument(IdentifierName("page")),
+					Argument(10.ToLiteral())
+				)));
+
+			return method.WithBody(blocks);
+		}
+
 		protected override CompilationUnitSyntax internalGenerate(string propertyName, Type t)
 		{
 			var unit = CompilationUnit();
@@ -55,6 +86,16 @@ namespace Sannel.House.Generator.Generators
 						.AddBaseListTypes(SimpleBaseType(ParseTypeName("ContextBase")));
 
 			@class = addConstructor(@class);
+
+
+			var ti = t.GetTypeInfo();
+			var ga = ti.GetCustomAttribute<GenerationAttribute>() ?? new GenerationAttribute();
+
+			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Get))
+			{
+				@class = @class.AddMembers(generatePagedMethod(t));
+				@class = @class.AddMembers(generatePagedMethodWithPage(t));
+			}
 
 			unit = unit.AddMembers(NamespaceDeclaration(IdentifierName("Sannel.House.ServerSDK.Context")).AddMembers(@class));
 			return unit;
