@@ -63,11 +63,91 @@ namespace Sannel.House.Generator.Generators
 						))
 				);
 
-			/*					var result = await sc.Devices.GetPagedAsync(1, 20);
+			blocks = blocks.AddStatements(
+				ExpressionStatement(AwaitExpression(InvocationExpression(sc.MemberAccess("FakeLoginAsync"))
+					.AddArgumentListArguments(
+						Argument(IdentifierName(mClient))
+					)
+				)));
+
+			var controller = "controller";
+			var segments = "segments";
+
+			blocks = blocks.AddStatements(
+				ExpressionStatement(
+					AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+						mClient.MemberAccess("Get"),
+						ParenthesizedLambdaExpression(
+							Block(
+								ExpressionStatement(
+									TestBuilder.AssertAreEqual(3.ToLiteral(), segments.MemberAccess("Length"))
+								),
+								ExpressionStatement(
+									TestBuilder.AssertAreEqual(t.Name.ToLiteral(), IdentifierName(controller))
+								),
+								ExpressionStatement(
+									TestBuilder.AssertAreEqual("GetPaged".ToLiteral(), segments.ElementAccess(0))
+								),
+								ExpressionStatement(
+									TestBuilder.AssertAreEqual(1.ToLiteral(), segments.ElementAccess(1))
+								),
+								ExpressionStatement(
+									TestBuilder.AssertAreEqual(20.ToLiteral(), segments.ElementAccess(2))
+								),
+								ReturnStatement(
+									InvocationExpression(
+										MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
+											ObjectCreationExpression(
+												GenericName("ClientResult")
+													.AddTypeArgumentListArguments(
+														GenericName("PagedResults")
+															.AddTypeArgumentListArguments(
+																ParseTypeName(t.Name)
+															)
+													)
+											).AddArgumentListArguments()
+											.WithInitializer(
+												InitializerExpression(SyntaxKind.ObjectInitializerExpression,
+													SingletonSeparatedList<ExpressionSyntax>(
+														AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+															IdentifierName("Success"),
+															false.ToLiteral()
+														)
+													)
+												)
+											),
+											IdentifierName("AddError")
+										)
+									).AddArgumentListArguments(
+										Argument("Request Error".ToLiteral())
+									)
+								)
+							)
+						).AddParameterListParameters(
+							Parameter(Identifier(controller)),
+							Parameter(Identifier(segments))
+						)
+					)
+				)
+				);
+
+			/*					
+					await sc.FakeLoginAsync(mClient);
+
+					mClient.Get = (controller, segments) =>
+					{
+						return new ClientResult<PagedResults<Device>>()
+						{
+							Success = false
+						}.AddError("Request Error");
+					};
+
+					result = await sc.Devices.GetPagedAsync(1, 20);
 					Assert.False(result.Success);
 					Assert.NotNull(result.Errors);
-					Assert.Equal(1, result.Errors.Count);
-					Assert.Equal(Errors.ServerContext_PleaseLogin, result.Errors[0]);
+					Assert.Equal(2, result.Errors.Count);
+					Assert.Equal("Request Error", result.Errors[0]);
+					Assert.Equal(Errors.ServerContext_ErrorMakingRequest, result.Errors[1]);
 */
 
 			method = method.WithBody(Block(

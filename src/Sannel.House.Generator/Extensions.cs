@@ -16,7 +16,17 @@ namespace Sannel.House.Generator
 {
 	public static class Extensions
 	{
-		public static String ReplaceKeys(this String path, PropertyWithName pwn, RunConfig config)
+		public static ElementAccessExpressionSyntax ElementAccess(this string name, int index)
+		{
+			return SF.ElementAccessExpression(SF.IdentifierName(name)).AddArgumentListArguments(SF.Argument(index.ToLiteral()));
+		}
+
+		public static ElementAccessExpressionSyntax ElementAccess(this string name, string index)
+		{
+			return SF.ElementAccessExpression(SF.IdentifierName(name)).AddArgumentListArguments(SF.Argument(index.ToLiteral()));
+		}
+
+		public static string ReplaceKeys(this string path, PropertyWithName pwn, RunConfig config)
 		{
 			path = path.Replace("{TypeName}", pwn.Type.Name);
 			return path;
