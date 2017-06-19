@@ -26,6 +26,69 @@ namespace Sannel.House.Generator.Generators
 {
 	public class SDKServerContextTypesTestsGenerator : GeneratorBase
 	{
+		private MethodDeclarationSyntax generateGetPagedTest(string propertyName, Type t)
+		{
+			var method = MethodDeclaration(ParseTypeName("Task"), "GetPagedTests")
+							.AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.AsyncKeyword))
+							.AddAttributeLists(AttributeList().AddAttributes(TestBuilder.GetMethodAttribute()));
+
+			var mClient = "mClient";
+			var sc = "sc";
+			var result = "result";
+
+			var blocks = Block(
+					LocalDeclarationStatement(
+						Extensions.VariableDeclaration(result,
+							EqualsValueClause(
+								AwaitExpression(
+									InvocationExpression(
+										sc.MemberAccess("Devices", "GetPagedAsync")
+									).AddArgumentListArguments(
+										Argument(1.ToLiteral()),
+										Argument(20.ToLiteral())
+									)
+								)
+							)
+						)
+					),
+					ExpressionStatement(TestBuilder.AssertIsFalse(result.MemberAccess("Success"))),
+					ExpressionStatement(TestBuilder.AssertIsNotNull(result.MemberAccess("Errors"))),
+					ExpressionStatement(TestBuilder.AssertAreEqual(1.ToLiteral(), result.MemberAccess("Errors", "Count"))),
+					ExpressionStatement(TestBuilder.AssertAreEqual(
+						"Errors".MemberAccess("ServerContext_PleaseLogin"),
+						ElementAccessExpression(result.MemberAccess("Errors"))
+						.AddArgumentListArguments(
+							Argument(0.ToLiteral())
+						)
+						))
+				);
+
+			/*					var result = await sc.Devices.GetPagedAsync(1, 20);
+					Assert.False(result.Success);
+					Assert.NotNull(result.Errors);
+					Assert.Equal(1, result.Errors.Count);
+					Assert.Equal(Errors.ServerContext_PleaseLogin, result.Errors[0]);
+*/
+
+			method = method.WithBody(Block(
+				UsingStatement(
+					Block(
+					UsingStatement(
+						blocks
+					).WithDeclaration(
+						Extensions.VariableDeclaration(sc,
+							EqualsValueClause(ObjectCreationExpression(ParseTypeName("ServerContext")).AddArgumentListArguments(Argument(IdentifierName(mClient)))
+						)
+					)))
+				).WithDeclaration(
+					Extensions.VariableDeclaration(mClient,
+						EqualsValueClause(ObjectCreationExpression(ParseTypeName("MockHttpClient")))
+					)
+				)
+				));
+
+			return method;
+		}
 		protected override CompilationUnitSyntax internalGenerate(string propertyName, Type t)
 		{
 			var filename = $"{t.Name}ContextTests";
@@ -55,7 +118,7 @@ namespace Sannel.House.Generator.Generators
 
 			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Get))
 			{
-				//@class = @class.AddMembers(generateGetTest(controllerName, propertyName, t));
+				@class = @class.AddMembers(generateGetPagedTest(propertyName, t));
 			}
 			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.GetWithId))
 			{
@@ -73,7 +136,7 @@ namespace Sannel.House.Generator.Generators
 					).WithSemicolonToken(SF.Token(SyntaxKind.SemicolonToken))
 					.WithLeadingTrivia(SF.Comment("// used to make sure reference tables have data needed for a test to succeed"))
 				);*/
-			}
+		}
 			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Put))
 			{
 				/*@class = @class.AddMembers(generatePutTest(controllerName, propertyName, t));
