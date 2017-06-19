@@ -1,154 +1,167 @@
 ﻿{
-	"Generators": {
-		"ControllerGenerator": {
-			"Type": "PerType",
-			"Class": "Sannel.House.Generator.Generators.ControllerGenerator"
+		"Generators": {
+				"ControllerGenerator": {
+						"Type": "PerType",
+						"Class": "Sannel.House.Generator.Generators.ControllerGenerator"
+				},
+				"ControllerTestsGenerator": {
+						"Type": "PerType",
+						"Class": "Sannel.House.Generator.Generators.ControllerTestsGenerator"
+				},
+				"ServerInterfaceGenerator": {
+						"Type": "PerType",
+						"Class": "Sannel.House.Generator.Generators.InterfaceGenerator"
+				},
+				"ServerResultGenerator": {
+						"Type": "PerType",
+						"Class": "Sannel.House.Generator.Generators.ResultGenerator"
+				},
+				"ServerResultsGenerator": {
+						"Type": "PerType",
+						"Class": "Sannel.House.Generator.Generators.ResultsGenerator"
+				},
+				"SDKServerContextGenerator": {
+						"Type": "Combined",
+						"Class": "Sannel.House.Generator.Generators.SDKServerContextGenerator"
+				},
+				"ServerContextTestsGenerator": {
+						"Type": "Combined",
+						"Class": "Sannel.House.Generator.Generators.ServerContextTestsGenerator"
+				},
+				"ICreateGenerator": {
+						"Type": "Combined",
+						"Class": "Sannel.House.Generator.Generators.ICreateGenerator"
+				},
+				"SDKModelsGenerator": {
+						"Type": "PerType",
+						"Class": "Sannel.House.Generator.Generators.SDKModelsGenerator"
+				},
+				"SDKServerTypeContextGenerator": {
+						"Type": "PerType",
+						"Class": "Sannel.House.Generator.Generators.SDKServerContextTypesGenerator"
+				},
+				"SDKServerTypeTestsContextGenerator": {
+						"Type": "PerType",
+						"Class": "Sannel.House.Generator.Generators.SDKServerContextTypesTestsGenerator"
+				}
 		},
-		"ControllerTestsGenerator":  {
-			"Type":  "PerType",
-			"Class":  "Sannel.House.Generator.Generators.ControllerTestsGenerator"
+		"TestBuilders": {
+				"XUnit": {
+						"Class": "Sannel.House.Generator.Common.XUnitTestBuilder"
+				},
+				"UWPUnit": {
+						"Class": "Sannel.House.Generator.Common.UWPMSTestBuilder"
+				}
 		},
-		"ServerInterfaceGenerator": {
-			"Type":  "PerType",
-			"Class":  "Sannel.House.Generator.Generators.InterfaceGenerator"
+		"HttpBuilders": {
+				"UWPHttpBuilder": {
+						"Class": "Sannel.House.Generator.Common.UWPHttpClientBuilder"
+				},
+				"HttpBuilder": {
+						"Class": "Sannel.House.Generator.Common.HttpClientBuilder"
+				}
 		},
-		"ServerResultGenerator":  {
-			"Type":  "PerType",
-			"Class":  "Sannel.House.Generator.Generators.ResultGenerator"
+		"TaskBuilders": {
+				"UWPTaskBuilder": {
+						"Class": "Sannel.House.Generator.Common.UWPTaskBuilder"
+				},
+				"TaskBuilder": {
+						"Class": "Sannel.House.Generator.Common.TaskBuilder"
+				}
 		},
-		"ServerResultsGenerator":  {
-			"Type":  "PerType",
-			"Class":  "Sannel.House.Generator.Generators.ResultsGenerator"
-		},
-		"SDKServerContextGenerator":  {
-			"Type":  "Combined",
-			"Class":  "Sannel.House.Generator.Generators.SDKServerContextGenerator"
-		},
-		"ServerContextTestsGenerator":  {
-			"Type":  "Combined",
-			"Class":  "Sannel.House.Generator.Generators.ServerContextTestsGenerator"
-		},
-		"ICreateGenerator": {
-			"Type": "Combined",
-			"Class":  "Sannel.House.Generator.Generators.ICreateGenerator"
-		},
-		"SDKModelsGenerator":  {
-			"Type":  "PerType",
-			"Class":  "Sannel.House.Generator.Generators.SDKModelsGenerator"
-		},
-		"SDKServerTypeContextGenerator": {
-			"Type":  "PerType",
-			"Class":  "Sannel.House.Generator.Generators.SDKServerContextTypesGenerator"
-		}
-	},
-	"TestBuilders":  {
-		"XUnit": {
-			"Class":  "Sannel.House.Generator.Common.XUnitTestBuilder"
-		},
-		"UWPUnit": {
-			"Class":  "Sannel.House.Generator.Common.UWPMSTestBuilder"
-		}
-	},
-	"HttpBuilders":  {
-		"UWPHttpBuilder":  {
-			"Class":  "Sannel.House.Generator.Common.UWPHttpClientBuilder"
-		},
-		"HttpBuilder":  {
-			"Class":  "Sannel.House.Generator.Common.HttpClientBuilder"
-		}
-	},
-	"TaskBuilders":  {
-		"UWPTaskBuilder": {
-			"Class":  "Sannel.House.Generator.Common.UWPTaskBuilder"
-		},
-		"TaskBuilder": {
-			"Class":  "Sannel.House.Generator.Common.TaskBuilder"
-		}
-	},
-	"Run": [
-		{
-			"Name":  "Controller",
-			"Directory":  "Web\\Controllers",
-			"FileName":  "{TypeName}Controller.Generated.cs",
-			"Generator":  "ControllerGenerator",
-			"TestBuilder": null,
-			"HttpBuilder": null
-		},
-		{
-			"Name":  "ControllerTests",
-			"Directory":  "Web\\Tests",
-									"FileName": "{TypeName}ControllerTests.Generated.cs",
-			"Generator":  "ControllerTestsGenerator",
-			"TestBuilder": "XUnit",
-			"HttpBuilder": null
-		},
-		{
-			"Name":  "SDK Models",
-			"Directory":  "SDK\\Models",
-			"FileName":  "{TypeName}.Generated.cs",
-			"Generator":  "SDKModelsGenerator",
-			"TestBuilder":  null,
-			"HttpBuilder":  null
-		},
-		{
-			"Name":  "Server Interfaces",
-			"Directory":  "ServerSDK\\Interfaces",
-			"FileName":  "I{TypeName}.cs",
-			"Generator":  "ServerInterfaceGenerator",
-			"TestBuilder": null,
-			"HttpBuilder": null
-		},
-		{
-			"Name":  "Result Generator",
-			"Directory":  "ServerSDK\\Results",
-			"FileName":  "{TypeName}Result.cs",
-			"Generator":  "ServerResultGenerator",
-			"TestBuilder": null,
-			"HttpBuilder": null
-		},
-		{
-			"Name":  "Results Generator",
-			"Directory":  "ServerSDK\\Results",
-			"FileName":  "{TypeName}Results.cs",
-			"Generator":  "ServerResultsGenerator",
-			"TestBuilder": null,
-			"HttpBuilder": null
-		},
-		{
-			"Name":  "Server Context Generator",
-			"Directory":  "SDK",
-			"FileName":  "ServerContext.Generated.cs",
-			"Generator":  "SDKServerContextGenerator",
-			"TestBuilder":  null,
-			"HttpBuilder": "HttpBuilder",
-			"TaskBuilder":  "TaskBuilder"
-		},
-		{
-			"Name":  "Server Context Type Generator",
-			"Directory": "SDK\\Context",
-			"FileName":  "{TypeName}Context.Generated.cs",
-			"Generator": "SDKServerTypeContextGenerator",
-			"TestBuilder":  null,
-			"HttpBuilder":  "HttpBuilder",
-			"TaskBuilder":  "TaskBuilder"
-		},
-		{
-			"Name":  "Server Context Tests Generator",
-			"Directory":  "SDK\\Tests",
-			"FileName":  "ServerContextTests.Generated.cs",
-			"Generator":  "ServerContextTestsGenerator",
-			"TestBuilder":  "XUnit",
-			"HttpBuilder":  "HttpBuilder",
-			"TaskBuilder":  "TaskBuilder"
-		},
-		{
-			"Name": "ICreate Generator",
-			"Directory":  "ServerSDK\\Interfaces",
-			"FileName":  "ICreateHelper.cs",
-			"Generator": "ICreateGenerator",
-			"TestBuilder": null,
-			"HttpBuilder": null,
-			"TaskBuilder":  null
-		}
-	]
+		"Run": [
+				{
+						"Name": "Controller",
+						"Directory": "Web\\Controllers",
+						"FileName": "{TypeName}Controller.Generated.cs",
+						"Generator": "ControllerGenerator",
+						"TestBuilder": null,
+						"HttpBuilder": null
+				},
+				{
+						"Name": "ControllerTests",
+						"Directory": "Web\\Tests",
+						"FileName": "{TypeName}ControllerTests.Generated.cs",
+						"Generator": "ControllerTestsGenerator",
+						"TestBuilder": "XUnit",
+						"HttpBuilder": null
+				},
+				{
+						"Name": "SDK Models",
+						"Directory": "SDK\\Models",
+						"FileName": "{TypeName}.Generated.cs",
+						"Generator": "SDKModelsGenerator",
+						"TestBuilder": null,
+						"HttpBuilder": null
+				},
+				{
+						"Name": "Server Interfaces",
+						"Directory": "ServerSDK\\Interfaces",
+						"FileName": "I{TypeName}.cs",
+						"Generator": "ServerInterfaceGenerator",
+						"TestBuilder": null,
+						"HttpBuilder": null
+				},
+				{
+						"Name": "Result Generator",
+						"Directory": "ServerSDK\\Results",
+						"FileName": "{TypeName}Result.cs",
+						"Generator": "ServerResultGenerator",
+						"TestBuilder": null,
+						"HttpBuilder": null
+				},
+				{
+						"Name": "Results Generator",
+						"Directory": "ServerSDK\\Results",
+						"FileName": "{TypeName}Results.cs",
+						"Generator": "ServerResultsGenerator",
+						"TestBuilder": null,
+						"HttpBuilder": null
+				},
+				{
+						"Name": "Server Context Generator",
+						"Directory": "SDK",
+						"FileName": "ServerContext.Generated.cs",
+						"Generator": "SDKServerContextGenerator",
+						"TestBuilder": null,
+						"HttpBuilder": "HttpBuilder",
+						"TaskBuilder": "TaskBuilder"
+				},
+				{
+						"Name": "Server Context Type Generator",
+						"Directory": "SDK\\Context",
+						"FileName": "{TypeName}Context.Generated.cs",
+						"Generator": "SDKServerTypeContextGenerator",
+						"TestBuilder": null,
+						"HttpBuilder": "HttpBuilder",
+						"TaskBuilder": "TaskBuilder"
+				},
+				{
+						"Name": "Server Context Type Tests Generator",
+						"Directory": "SDK\\Tests\\Context",
+						"FileName": "{TypeName}Context.Tests.Generated.cs",
+						"Generator": "SDKServerTypeTestsContextGenerator",
+						"TestBuilder": "XUnit",
+						"HttpBuilder": "HttpBuilder",
+						"TaskBuilder": "TaskBuilder"
+				},
+				{
+						"Name": "Server Context Tests Generator",
+						"Directory": "SDK\\Tests",
+						"FileName": "ServerContextTests.Generated.cs",
+						"Generator": "ServerContextTestsGenerator",
+						"TestBuilder": "XUnit",
+						"HttpBuilder": "HttpBuilder",
+						"TaskBuilder": "TaskBuilder"
+				},
+				{
+						"Name": "ICreate Generator",
+						"Directory": "ServerSDK\\Interfaces",
+						"FileName": "ICreateHelper.cs",
+						"Generator": "ICreateGenerator",
+						"TestBuilder": null,
+						"HttpBuilder": null,
+						"TaskBuilder": null
+				}
+		]
 }

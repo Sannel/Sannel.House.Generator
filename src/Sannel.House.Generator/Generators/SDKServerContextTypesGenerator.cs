@@ -45,33 +45,181 @@ namespace Sannel.House.Generator.Generators
 			return @class.AddMembers(cons.WithBody(blocks));
 		}
 
-		private MethodDeclarationSyntax generatePagedMethod(Type t)
+		#region GetPaged
+		private MethodDeclarationSyntax generatePagedMethod(string propertyName, Type t)
 		{
-			var method = MethodDeclaration(GenericName("PagedResults").AddTypeArgumentListArguments(ParseTypeName(t.Name)), "GetPaged")
-							.AddModifiers(Token(SyntaxKind.PublicKeyword));
+			var method = MethodDeclaration(
+				GenericName("Task").AddTypeArgumentListArguments(
+					GenericName("PagedResults").AddTypeArgumentListArguments(ParseTypeName(t.Name))), 
+				"GetPagedAsync")
+				.AddModifiers(Token(SyntaxKind.PublicKeyword))
+				.WithLeadingTrivia(
+					ParseLeadingTrivia($@"/// <summary>
+/// Gets the {propertyName} asynchronous. Starting at page 1
+/// </summary>
+/// <returns></returns>
+")
+				);
 
-			var blocks = Block(ReturnStatement(InvocationExpression(IdentifierName("GetPaged")).AddArgumentListArguments(Argument(1.ToLiteral()))));
+			var blocks = Block(ReturnStatement(InvocationExpression(IdentifierName("GetPagedAsync")).AddArgumentListArguments(Argument(1.ToLiteral()))));
 
 			return method.WithBody(blocks);
 		}
 
-		private MethodDeclarationSyntax generatePagedMethodWithPage(Type t)
+		private MethodDeclarationSyntax generatePagedMethodWithPage(string propertyName, Type t)
 		{
 
-			var method = MethodDeclaration(GenericName("PagedResults").AddTypeArgumentListArguments(ParseTypeName(t.Name)), "GetPaged")
-							.AddModifiers(Token(SyntaxKind.PublicKeyword))
-							.AddParameterListParameters(
-								Parameter(Identifier("page")).WithType(ParseTypeName("int"))
-							);
+			var method = MethodDeclaration(
+				GenericName("Task").AddTypeArgumentListArguments(
+					GenericName("PagedResults").AddTypeArgumentListArguments(ParseTypeName(t.Name))), 
+				"GetPagedAsync")
+				.AddModifiers(Token(SyntaxKind.PublicKeyword))
+				.AddParameterListParameters(
+					Parameter(Identifier("page")).WithType(ParseTypeName("int"))
+				)
+				.WithLeadingTrivia(
+					ParseLeadingTrivia($@"/// <summary>
+/// Gets the {propertyName} asynchronous. starting at <paramref name=""page""/>
+/// </summary>
+/// <param name=""page"">The page.</param>
+/// <returns></returns>
+")
+				);
 
-			var blocks = Block(ReturnStatement(InvocationExpression(IdentifierName("GetPaged"))
+			var blocks = Block(ReturnStatement(InvocationExpression(IdentifierName("GetPagedAsync"))
 				.AddArgumentListArguments(
 					Argument(IdentifierName("page")),
-					Argument(10.ToLiteral())
+					Argument(25.ToLiteral())
 				)));
 
 			return method.WithBody(blocks);
 		}
+
+		private MethodDeclarationSyntax generatePagedMethodWithPageAndPageSize(string propertyName, Type t)
+		{
+
+			var method = MethodDeclaration(
+				GenericName("Task").AddTypeArgumentListArguments(
+					GenericName("PagedResults").AddTypeArgumentListArguments(ParseTypeName(t.Name))), 
+				"GetPagedAsync")
+				.AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.AsyncKeyword))
+				.AddParameterListParameters(
+					Parameter(Identifier("page")).WithType(ParseTypeName("int")),
+					Parameter(Identifier("pageSize")).WithType(ParseTypeName("int"))
+				)
+				.WithLeadingTrivia(
+					ParseLeadingTrivia($@"/// <summary>
+/// Gets the {propertyName} asynchronous. starting at <paramref name=""page""/> retrieving <paramref name=""pageSize""/>
+/// </summary>
+/// <param name=""page"">The page.</param>
+/// <param name=""pageSize"">Size of the page.</param>
+/// <returns></returns>
+")
+				);
+
+			var loginResult = "loginResult";
+			var blocks = Block(LocalDeclarationStatement(Extensions.VariableDeclaration(loginResult,
+				EqualsValueClause(
+					InvocationExpression(
+						GenericName("VerifyLoggedIn")
+						.AddTypeArgumentListArguments(
+							GenericName("PagedResults").AddTypeArgumentListArguments(ParseTypeName(t.Name))
+						)
+					)
+				))));
+			blocks = blocks.AddStatements(
+				IfStatement(
+					PrefixUnaryExpression(
+						SyntaxKind.LogicalNotExpression,
+						loginResult.MemberAccess("Success")
+					),
+					Block(
+						ReturnStatement(
+							IdentifierName(loginResult)
+						)
+					)
+				)
+			);
+
+			var results = "results";
+
+			blocks = blocks.AddStatements(
+				LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						results,
+						EqualsValueClause(
+							AwaitExpression(
+								InvocationExpression(
+									"context".MemberAccess(
+										"HttpClient"
+									).MemberAccess(
+										GenericName(
+											"GetAsync"
+										).AddTypeArgumentListArguments(
+											GenericName("PagedResults")
+											.AddTypeArgumentListArguments(
+												ParseTypeName(t.Name)
+											)
+										)
+									)
+								).AddArgumentListArguments(
+									Argument(t.Name.ToLiteral()),
+									Argument("GetPaged".ToLiteral()),
+									Argument(IdentifierName("page")),
+									Argument(IdentifierName("pageSize"))
+								)
+							)
+						)
+					)
+				)
+			);
+
+			blocks = blocks.AddStatements(
+				IfStatement(
+					BinaryExpression(SyntaxKind.LogicalAndExpression,
+						results.MemberAccess("Success"),
+						BinaryExpression(SyntaxKind.NotEqualsExpression,
+							results.MemberAccess("Data"),
+							LiteralExpression(SyntaxKind.NullLiteralExpression)
+						)
+					),
+					Block(
+						ReturnStatement(
+							results.MemberAccess("Data")
+						)
+					)
+				).WithElse(
+					ElseClause(
+						Block(
+							ReturnStatement(
+								InvocationExpression(
+									IdentifierName("CreateRequestError")
+								).AddArgumentListArguments(
+									Argument(IdentifierName(results))
+								)
+							)
+						)
+					)
+				)
+			);
+			/*
+
+			var pResults = await context.HttpClient.GetAsync<PagedResults<Device>>("device", "GetPaged", page, pageSize);
+
+			if (pResults.Success && pResults.Data != null)
+			{
+				return pResults.Data;
+			}
+			else
+			{
+				return CreateRequestError(pResults);
+			}
+			
+			 */
+
+			return method.WithBody(blocks);
+		}
+#endregion
 
 		protected override CompilationUnitSyntax internalGenerate(string propertyName, Type t)
 		{
@@ -79,7 +227,8 @@ namespace Sannel.House.Generator.Generators
 
 			unit = unit.AddUsings("System").WithLeadingTrivia(GetLicenseComment());
 			unit = unit.AddUsings("System.Threading.Tasks",
-									"Sannel.House.ServerSDK.Results");
+									"Sannel.House.ServerSDK.Results",
+									"Sannel.House.ServerSDK.Models");
 
 			var @class = ClassDeclaration($"{t.Name}Context")
 						.AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.PartialKeyword))
@@ -93,8 +242,9 @@ namespace Sannel.House.Generator.Generators
 
 			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Get))
 			{
-				@class = @class.AddMembers(generatePagedMethod(t));
-				@class = @class.AddMembers(generatePagedMethodWithPage(t));
+				@class = @class.AddMembers(generatePagedMethod(propertyName, t));
+				@class = @class.AddMembers(generatePagedMethodWithPage(propertyName, t));
+				@class = @class.AddMembers(generatePagedMethodWithPageAndPageSize(propertyName, t));
 			}
 
 			unit = unit.AddMembers(NamespaceDeclaration(IdentifierName("Sannel.House.ServerSDK.Context")).AddMembers(@class));
