@@ -21,6 +21,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System.Reflection;
 using Sannel.House.Web.Base;
+using System.Threading.Tasks;
 
 namespace Sannel.House.Generator.Generators
 {
@@ -51,10 +52,10 @@ namespace Sannel.House.Generator.Generators
 							)
 						)
 					),
-					ExpressionStatement(TestBuilder.AssertIsFalse(result.MemberAccess("Success"))),
-					ExpressionStatement(TestBuilder.AssertIsNotNull(result.MemberAccess("Errors"))),
-					ExpressionStatement(TestBuilder.AssertAreEqual(1.ToLiteral(), result.MemberAccess("Errors", "Count"))),
-					ExpressionStatement(TestBuilder.AssertAreEqual(
+					ExpressionStatement(TestBuilder.False(result.MemberAccess("Success"))),
+					ExpressionStatement(TestBuilder.NotNull(result.MemberAccess("Errors"))),
+					ExpressionStatement(TestBuilder.Equal(1.ToLiteral(), result.MemberAccess("Errors", "Count"))),
+					ExpressionStatement(TestBuilder.Equal(
 						"Errors".MemberAccess("ServerContext_PleaseLogin"),
 						ElementAccessExpression(result.MemberAccess("Errors"))
 						.AddArgumentListArguments(
@@ -80,19 +81,19 @@ namespace Sannel.House.Generator.Generators
 						ParenthesizedLambdaExpression(
 							Block(
 								ExpressionStatement(
-									TestBuilder.AssertAreEqual(3.ToLiteral(), segments.MemberAccess("Length"))
+									TestBuilder.Equal(3.ToLiteral(), segments.MemberAccess("Length"))
 								),
 								ExpressionStatement(
-									TestBuilder.AssertAreEqual(t.Name.ToLiteral(), IdentifierName(controller))
+									TestBuilder.Equal(t.Name.ToLiteral(), IdentifierName(controller))
 								),
 								ExpressionStatement(
-									TestBuilder.AssertAreEqual("GetPaged".ToLiteral(), segments.ElementAccess(0))
+									TestBuilder.Equal("GetPaged".ToLiteral(), segments.ElementAccess(0))
 								),
 								ExpressionStatement(
-									TestBuilder.AssertAreEqual(1.ToLiteral(), segments.ElementAccess(1))
+									TestBuilder.Equal(1.ToLiteral(), segments.ElementAccess(1))
 								),
 								ExpressionStatement(
-									TestBuilder.AssertAreEqual(20.ToLiteral(), segments.ElementAccess(2))
+									TestBuilder.Equal(20.ToLiteral(), segments.ElementAccess(2))
 								),
 								ReturnStatement(
 									InvocationExpression(
@@ -131,24 +132,155 @@ namespace Sannel.House.Generator.Generators
 				)
 				);
 
+			blocks = blocks.AddStatements(
+				ExpressionStatement(
+					AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+						IdentifierName(result),
+						AwaitExpression(
+							InvocationExpression(
+								sc.MemberAccess("Devices", "GetPagedAsync")
+							).AddArgumentListArguments(
+								Argument(1.ToLiteral()),
+								Argument(20.ToLiteral())
+							)
+						)
+					)
+				),
+				ExpressionStatement(
+					TestBuilder.False(result.MemberAccess("Success"))
+				),
+				TestBuilder.NotNull(result.MemberAccess("Errors")).ToStatement(),
+				TestBuilder.Equal(2.ToLiteral(), result.MemberAccess("Errors", "Count")).ToStatement(),
+				TestBuilder.Equal("Request Error".ToLiteral(), result.MemberAccess("Errors").ElementAccess(0)).ToStatement(),
+				TestBuilder.Equal("Errors".MemberAccess("ServerContext_ErrorMakingRequest"), result.MemberAccess("Errors").ElementAccess(1)).ToStatement()
+			);
+
+			blocks = blocks.AddStatements(
+				AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					mClient.MemberAccess("Get"),
+					ParenthesizedLambdaExpression(
+						Block(
+							ExpressionStatement(
+								TestBuilder.Equal(3.ToLiteral(), segments.MemberAccess("Length"))
+							),
+							ExpressionStatement(
+								TestBuilder.Equal(t.Name.ToLiteral(), IdentifierName(controller))
+							),
+							ExpressionStatement(
+								TestBuilder.Equal("GetPaged".ToLiteral(), segments.ElementAccess(0))
+							),
+							ExpressionStatement(
+								TestBuilder.Equal(1.ToLiteral(), segments.ElementAccess(1))
+							),
+							ExpressionStatement(
+								TestBuilder.Equal(2.ToLiteral(), segments.ElementAccess(2))
+							),
+							ReturnStatement(
+								ObjectCreationExpression(
+									GenericName("ClientResult")
+									.AddTypeArgumentListArguments(
+										GenericName("PagedResults")
+										.AddTypeArgumentListArguments(
+											ParseTypeName(t.Name)
+										)
+									)
+								).AddArgumentListArguments()
+								.WithInitializer(
+									InitializerExpression(SyntaxKind.ObjectInitializerExpression,
+										SingletonSeparatedList<ExpressionSyntax>(
+											AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+												IdentifierName("Data"),
+												InvocationExpression(
+													ObjectCreationExpression(
+														GenericName("PagedResults")
+														.AddTypeArgumentListArguments(
+															ParseTypeName(t.Name)
+														)
+													).AddArgumentListArguments()
+													.WithInitializer(
+														InitializerExpression(SyntaxKind.ObjectInitializerExpression,
+															SingletonSeparatedList<ExpressionSyntax>(
+																AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+																	IdentifierName("Success"),
+																	false.ToLiteral()
+																)
+															)
+														)
+													).MemberAccess(
+														"AddError"
+													)
+												).AddArgumentListArguments(
+													Argument("Cannot connect to database".ToLiteral())
+												)
+											)
+										).Add(
+											AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+												IdentifierName("Success"),
+												true.ToLiteral()
+											)
+										)
+									)
+								)
+							)
+						)
+					).AddParameterListParameters(
+						Parameter(Identifier(controller)),
+						Parameter(Identifier(segments))
+					)
+				).ToStatement()
+			);
+
+			blocks = blocks.AddStatements(
+				AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					IdentifierName(result),
+					AwaitExpression(
+						InvocationExpression(
+							sc.MemberAccess("Devices", "GetPagedAsync")
+						).AddArgumentListArguments(
+							1.ToArgument(),
+							2.ToArgument()
+						)
+					)
+				).ToStatement(),
+				TestBuilder.False(result.MemberAccess("Success")).ToStatement(),
+				TestBuilder.NotNull(result.MemberAccess("Errors")).ToStatement(),
+				TestBuilder.Equal(1.ToLiteral(), result.MemberAccess("Errors", "Count")).ToStatement(),
+				TestBuilder.Equal("Cannot connect to database".ToLiteral(), result.MemberAccess("Errors").ElementAccess(0)).ToStatement()
+			);
+
+			var var1 = "var1";
+			var var2 = "var2";
+
+			blocks = blocks.AddStatements(
+				t.GenerateRandomObject(var1)
+			);
+			var rand = new Random();
+			Task.Delay(rand.Next(500, 1000)).Wait();
+			blocks = blocks.AddStatements(
+				t.GenerateRandomObject(var2)
+			);
 			/*					
-					await sc.FakeLoginAsync(mClient);
+								var device1 = new Device()
+								{
+									Id = 1,
+									Description = "testDescription",
+									Name = "testName",
+									IsReadOnly = true,
+									DisplayOrder = 0,
+									DateCreated = DateTime.UtcNow
+								};
 
-					mClient.Get = (controller, segments) =>
-					{
-						return new ClientResult<PagedResults<Device>>()
-						{
-							Success = false
-						}.AddError("Request Error");
-					};
+								var device2 = new Device()
+								{
+									Id = 2,
+									Description = "testDescription2",
+									Name = "testName2",
+									IsReadOnly = true,
+									DisplayOrder = 1,
+									DateCreated = DateTime.UtcNow
+								};
 
-					result = await sc.Devices.GetPagedAsync(1, 20);
-					Assert.False(result.Success);
-					Assert.NotNull(result.Errors);
-					Assert.Equal(2, result.Errors.Count);
-					Assert.Equal("Request Error", result.Errors[0]);
-					Assert.Equal(Errors.ServerContext_ErrorMakingRequest, result.Errors[1]);
-*/
+			*/
 
 			method = method.WithBody(Block(
 				UsingStatement(

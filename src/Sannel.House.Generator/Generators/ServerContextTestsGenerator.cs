@@ -42,24 +42,24 @@ namespace Sannel.House.Generator.Generators
 		{
 			if(String.Compare(method, "AreNotEqual", true) == 0)
 			{
-				return ExpressionStatement(testBuilder.AssertAreNotEqual(expected, actual));
+				return ExpressionStatement(testBuilder.NotEqual(expected, actual));
 			}
-			return ExpressionStatement(testBuilder.AssertAreEqual(expected, actual));
+			return ExpressionStatement(testBuilder.Equal(expected, actual));
 		}
 
 		private StatementSyntax assertIsNull(ExpressionSyntax test, String message)
 		{
-			return ExpressionStatement(testBuilder.AssertIsNull(test, message));
+			return ExpressionStatement(testBuilder.Null(test, message));
 		}
 
 		private StatementSyntax assertIsNotNull(ExpressionSyntax test, String message)
 		{
-			return ExpressionStatement(testBuilder.AssertIsNotNull(test, message));
+			return ExpressionStatement(testBuilder.NotNull(test, message));
 		}
 
 		private StatementSyntax assertIsTrue(ExpressionSyntax test, string v)
 		{
-			return ExpressionStatement(testBuilder.AssertIsTrue(test, v));
+			return ExpressionStatement(testBuilder.True(test, v));
 		}
 
 		private ArgumentSyntax generateRunTaskWrapper(BlockSyntax blocks, params ParameterSyntax[] parameters)

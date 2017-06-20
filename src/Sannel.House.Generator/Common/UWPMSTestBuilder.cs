@@ -20,7 +20,7 @@ namespace Sannel.House.Generator.Common
 			}
 		}
 
-		public ExpressionSyntax AssertAreEqual(ExpressionSyntax expected, ExpressionSyntax actual)
+		public ExpressionSyntax Equal(ExpressionSyntax expected, ExpressionSyntax actual)
 		{
 			return InvocationExpression(
 					Extensions.MemberAccess(
@@ -33,7 +33,7 @@ namespace Sannel.House.Generator.Common
 				);
 		}
 
-		public ExpressionSyntax AssertAreEqual(ExpressionSyntax expected, ExpressionSyntax actual, string message)
+		public ExpressionSyntax Equal(ExpressionSyntax expected, ExpressionSyntax actual, string message)
 		{
 			return InvocationExpression(
 					Extensions.MemberAccess(
@@ -47,7 +47,7 @@ namespace Sannel.House.Generator.Common
 				);
 		}
 
-		public ExpressionSyntax AssertAreNotEqual(ExpressionSyntax expected, ExpressionSyntax actual)
+		public ExpressionSyntax NotEqual(ExpressionSyntax expected, ExpressionSyntax actual)
 		{
 			return InvocationExpression(
 					Extensions.MemberAccess(
@@ -60,7 +60,7 @@ namespace Sannel.House.Generator.Common
 				);
 		}
 
-		public ExpressionSyntax AssertAreNotEqual(ExpressionSyntax expected, ExpressionSyntax actual, string message)
+		public ExpressionSyntax NotEqual(ExpressionSyntax expected, ExpressionSyntax actual, string message)
 		{
 			return InvocationExpression(
 					Extensions.MemberAccess(
@@ -74,7 +74,7 @@ namespace Sannel.House.Generator.Common
 				);
 		}
 
-		public ExpressionSyntax AssertIsFalse(ExpressionSyntax expression)
+		public ExpressionSyntax False(ExpressionSyntax expression)
 		{
 			return InvocationExpression(
 					Extensions.MemberAccess(
@@ -86,7 +86,7 @@ namespace Sannel.House.Generator.Common
 				);
 		}
 
-		public ExpressionSyntax AssertIsFalse(ExpressionSyntax expression, string message)
+		public ExpressionSyntax False(ExpressionSyntax expression, string message)
 		{
 			return InvocationExpression(
 					Extensions.MemberAccess(
@@ -99,7 +99,7 @@ namespace Sannel.House.Generator.Common
 				);
 		}
 
-		public ExpressionSyntax AssertIsNotNull(ExpressionSyntax expression)
+		public ExpressionSyntax NotNull(ExpressionSyntax expression)
 		{
 			return InvocationExpression(
 					Extensions.MemberAccess(
@@ -111,7 +111,7 @@ namespace Sannel.House.Generator.Common
 				);
 		}
 
-		public ExpressionSyntax AssertIsNotNull(ExpressionSyntax expression, string message)
+		public ExpressionSyntax NotNull(ExpressionSyntax expression, string message)
 		{
 			return InvocationExpression(
 					Extensions.MemberAccess(
@@ -124,7 +124,7 @@ namespace Sannel.House.Generator.Common
 				);
 		}
 
-		public ExpressionSyntax AssertIsNull(ExpressionSyntax expression)
+		public ExpressionSyntax Null(ExpressionSyntax expression)
 		{
 			return InvocationExpression(
 					Extensions.MemberAccess(
@@ -136,7 +136,7 @@ namespace Sannel.House.Generator.Common
 				);
 		}
 
-		public ExpressionSyntax AssertIsNull(ExpressionSyntax expression, string message)
+		public ExpressionSyntax Null(ExpressionSyntax expression, string message)
 		{
 			return InvocationExpression(
 					Extensions.MemberAccess(
@@ -149,7 +149,7 @@ namespace Sannel.House.Generator.Common
 				);
 		}
 
-		public ExpressionSyntax AssertIsTrue(ExpressionSyntax expression)
+		public ExpressionSyntax True(ExpressionSyntax expression)
 		{
 			return InvocationExpression(
 					Extensions.MemberAccess(
@@ -161,7 +161,7 @@ namespace Sannel.House.Generator.Common
 				);
 		}
 
-		public ExpressionSyntax AssertIsTrue(ExpressionSyntax expression, string message)
+		public ExpressionSyntax True(ExpressionSyntax expression, string message)
 		{
 			return InvocationExpression(
 					Extensions.MemberAccess(

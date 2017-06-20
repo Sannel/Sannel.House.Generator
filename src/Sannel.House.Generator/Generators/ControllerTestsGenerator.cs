@@ -30,7 +30,7 @@ namespace Sannel.House.Generator.Generators
 				if (!prop.ShouldIgnore())
 				{
 					var exp = SF.ExpressionStatement(
-						TestBuilder.AssertAreEqual(
+						TestBuilder.Equal(
 							Extensions.MemberAccess(expected.Text, prop.Name),
 							Extensions.MemberAccess(actual.Text, prop.Name)
 						)
@@ -351,16 +351,16 @@ namespace Sannel.House.Generator.Generators
 					).WithLeadingTrivia(SF.Comment("// Call with invalid page number"))
 				),
 				SF.ExpressionStatement(
-					TestBuilder.AssertIsNotNull(SF.IdentifierName(paged))
+					TestBuilder.NotNull(SF.IdentifierName(paged))
 				),
 				SF.ExpressionStatement(
-					TestBuilder.AssertIsFalse(paged.Text.MemberAccess("Success"))
+					TestBuilder.False(paged.Text.MemberAccess("Success"))
 				),
 				SF.ExpressionStatement(
-					TestBuilder.AssertAreEqual(1.ToLiteral(), paged.MemberAccess("Errors", "Count"))
+					TestBuilder.Equal(1.ToLiteral(), paged.MemberAccess("Errors", "Count"))
 				),
 				SF.ExpressionStatement(
-					TestBuilder.AssertAreEqual("Page must be 1 or greater".ToLiteral(),
+					TestBuilder.Equal("Page must be 1 or greater".ToLiteral(),
 						SF.ElementAccessExpression(
 							paged.MemberAccess("Errors")
 						).AddArgumentListArguments(
@@ -383,16 +383,16 @@ namespace Sannel.House.Generator.Generators
 					).WithLeadingTrivia(SF.Comment("// Invalid PageSize"))
 				),
 				SF.ExpressionStatement(
-					TestBuilder.AssertIsNotNull(paged.ToIN())
+					TestBuilder.NotNull(paged.ToIN())
 				),
 				SF.ExpressionStatement(
-					TestBuilder.AssertIsFalse(paged.MemberAccess("Success"))
+					TestBuilder.False(paged.MemberAccess("Success"))
 				),
 				SF.ExpressionStatement(
-					TestBuilder.AssertAreEqual(1.ToLiteral(), paged.MemberAccess("Errors", "Count"))
+					TestBuilder.Equal(1.ToLiteral(), paged.MemberAccess("Errors", "Count"))
 				),
 				SF.ExpressionStatement(
-					TestBuilder.AssertAreEqual("PageSize must be 1 or greater".ToLiteral(),
+					TestBuilder.Equal("PageSize must be 1 or greater".ToLiteral(),
 						SF.ElementAccessExpression(
 							paged.MemberAccess("Errors")
 						).AddArgumentListArguments(
@@ -446,25 +446,25 @@ namespace Sannel.House.Generator.Generators
 							2.ToArgument()
 						)
 				).WithLeadingTrivia(SF.Comment("// Success Tests")).ToStatement(),
-				TestBuilder.AssertIsNotNull(
+				TestBuilder.NotNull(
 					paged.ToIN()
 				).ToStatement(),
-				TestBuilder.AssertIsTrue(
+				TestBuilder.True(
 					paged.MemberAccess("Success")
 				).ToStatement(),
-				TestBuilder.AssertAreEqual(
+				TestBuilder.Equal(
 					5.ToLiteral(),
 					paged.MemberAccess("TotalResults")
 				).ToStatement(),
-				TestBuilder.AssertAreEqual(
+				TestBuilder.Equal(
 					2.ToLiteral(),
 					paged.MemberAccess("PageSize")
 				).ToStatement(),
-				TestBuilder.AssertAreEqual(
+				TestBuilder.Equal(
 					1.ToLiteral(),
 					paged.MemberAccess("CurrentPage")
 				).ToStatement(),
-				TestBuilder.AssertIsNotNull(
+				TestBuilder.NotNull(
 					paged.MemberAccess("Data")
 				).ToStatement(),
 				SF.LocalDeclarationStatement(
@@ -475,7 +475,7 @@ namespace Sannel.House.Generator.Generators
 						)
 					)
 				),
-				TestBuilder.AssertAreEqual(2.ToLiteral(), list.MemberAccess("Count")).ToStatement(),
+				TestBuilder.Equal(2.ToLiteral(), list.MemberAccess("Count")).ToStatement(),
 				SF.LocalDeclarationStatement(
 					Extensions.VariableDeclaration(
 						actual.Text,
@@ -508,32 +508,32 @@ namespace Sannel.House.Generator.Generators
 							2.ToArgument()
 						)
 				).WithLeadingTrivia(SF.Comment("// Success Tests")).ToStatement(),
-				TestBuilder.AssertIsNotNull(
+				TestBuilder.NotNull(
 					paged.ToIN()
 				).ToStatement(),
-				TestBuilder.AssertIsTrue(
+				TestBuilder.True(
 					paged.MemberAccess("Success")
 				).ToStatement(),
-				TestBuilder.AssertAreEqual(
+				TestBuilder.Equal(
 					5.ToLiteral(),
 					paged.MemberAccess("TotalResults")
 				).ToStatement(),
-				TestBuilder.AssertAreEqual(
+				TestBuilder.Equal(
 					2.ToLiteral(),
 					paged.MemberAccess("PageSize")
 				).ToStatement(),
-				TestBuilder.AssertAreEqual(
+				TestBuilder.Equal(
 					2.ToLiteral(),
 					paged.MemberAccess("CurrentPage")
 				).ToStatement(),
-				TestBuilder.AssertIsNotNull(
+				TestBuilder.NotNull(
 					paged.MemberAccess("Data")
 				).ToStatement(),
 				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 					list.ToIN(),
 					paged.MemberAccess("Data", "ToList").Invoke()
 				).ToStatement(),
-				TestBuilder.AssertAreEqual(2.ToLiteral(), list.MemberAccess("Count")).ToStatement(),
+				TestBuilder.Equal(2.ToLiteral(), list.MemberAccess("Count")).ToStatement(),
 				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 					actual.ToIN(),
 					SF.ElementAccessExpression(
@@ -564,32 +564,32 @@ namespace Sannel.House.Generator.Generators
 							2.ToArgument()
 						)
 				).WithLeadingTrivia(SF.Comment("// Success Tests")).ToStatement(),
-				TestBuilder.AssertIsNotNull(
+				TestBuilder.NotNull(
 					paged.ToIN()
 				).ToStatement(),
-				TestBuilder.AssertIsTrue(
+				TestBuilder.True(
 					paged.MemberAccess("Success")
 				).ToStatement(),
-				TestBuilder.AssertAreEqual(
+				TestBuilder.Equal(
 					5.ToLiteral(),
 					paged.MemberAccess("TotalResults")
 				).ToStatement(),
-				TestBuilder.AssertAreEqual(
+				TestBuilder.Equal(
 					2.ToLiteral(),
 					paged.MemberAccess("PageSize")
 				).ToStatement(),
-				TestBuilder.AssertAreEqual(
+				TestBuilder.Equal(
 					3.ToLiteral(),
 					paged.MemberAccess("CurrentPage")
 				).ToStatement(),
-				TestBuilder.AssertIsNotNull(
+				TestBuilder.NotNull(
 					paged.MemberAccess("Data")
 				).ToStatement(),
 				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 					list.ToIN(),
 					paged.MemberAccess("Data", "ToList").Invoke()
 				).ToStatement(),
-				TestBuilder.AssertAreEqual(1.ToLiteral(), list.MemberAccess("Count")).ToStatement(),
+				TestBuilder.Equal(1.ToLiteral(), list.MemberAccess("Count")).ToStatement(),
 				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 					actual.ToIN(),
 					SF.ElementAccessExpression(
@@ -645,8 +645,8 @@ namespace Sannel.House.Generator.Generators
 						)
 					)
 				).WithLeadingTrivia(SF.Comment("// verify")),
-				TestBuilder.AssertIsNotNull(results.ToIN()).ToStatement(),
-				TestBuilder.AssertIsTrue(results.MemberAccess("Success")).ToStatement(),
+				TestBuilder.NotNull(results.ToIN()).ToStatement(),
+				TestBuilder.True(results.MemberAccess("Success")).ToStatement(),
 				SF.LocalDeclarationStatement(
 					Extensions.VariableDeclaration(
 						actual.Text,
@@ -668,8 +668,8 @@ namespace Sannel.House.Generator.Generators
 						SF.Argument(var2.MemberAccess(prop.Name))
 					)
 				).WithLeadingTrivia(SF.Comment($"// verify {var2}")).ToStatement(),
-				TestBuilder.AssertIsNotNull(results.ToIN()).ToStatement(),
-				TestBuilder.AssertIsTrue(results.MemberAccess("Success")).ToStatement(),
+				TestBuilder.NotNull(results.ToIN()).ToStatement(),
+				TestBuilder.True(results.MemberAccess("Success")).ToStatement(),
 				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 						actual.ToIN(),
 						results.MemberAccess("Data")
@@ -677,7 +677,7 @@ namespace Sannel.House.Generator.Generators
 			);
 
 			blocks = blocks.AddStatements(SF.ExpressionStatement(
-				TestBuilder.AssertIsNotNull(Extensions.MemberAccess(actual.Text, prop.Name))
+				TestBuilder.NotNull(Extensions.MemberAccess(actual.Text, prop.Name))
 			));
 			blocks = blocks.AddStatements(generateCompare(var2, actual, props));
 
@@ -689,8 +689,8 @@ namespace Sannel.House.Generator.Generators
 						SF.Argument(var3.MemberAccess(prop.Name))
 					)
 				).WithLeadingTrivia(SF.Comment($"// verify {var3}")).ToStatement(),
-				TestBuilder.AssertIsNotNull(results.ToIN()).ToStatement(),
-				TestBuilder.AssertIsTrue(results.MemberAccess("Success")).ToStatement(),
+				TestBuilder.NotNull(results.ToIN()).ToStatement(),
+				TestBuilder.True(results.MemberAccess("Success")).ToStatement(),
 				SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 						actual.ToIN(),
 						results.MemberAccess("Data")
@@ -698,7 +698,7 @@ namespace Sannel.House.Generator.Generators
 			);
 
 			blocks = blocks.AddStatements(SF.ExpressionStatement(
-				TestBuilder.AssertIsNotNull(Extensions.MemberAccess(actual.Text, prop.Name))
+				TestBuilder.NotNull(Extensions.MemberAccess(actual.Text, prop.Name))
 			));
 			blocks = blocks.AddStatements(generateCompare(var3, actual, props));
 
@@ -716,10 +716,10 @@ namespace Sannel.House.Generator.Generators
 						SF.Argument(SF.ParseTypeName(prop.PropertyType.Name).GetDefaultValue())
 					)
 				).WithLeadingTrivia(SF.Comment("// Failed Test")).ToStatement(),
-				TestBuilder.AssertIsNotNull(results.ToIN()).ToStatement(),
-				TestBuilder.AssertIsFalse(results.MemberAccess("Success")).ToStatement(),
-				TestBuilder.AssertAreEqual(1.ToLiteral(), results.MemberAccess("Errors", "Count")).ToStatement(),
-				TestBuilder.AssertAreEqual(
+				TestBuilder.NotNull(results.ToIN()).ToStatement(),
+				TestBuilder.False(results.MemberAccess("Success")).ToStatement(),
+				TestBuilder.Equal(1.ToLiteral(), results.MemberAccess("Errors", "Count")).ToStatement(),
+				TestBuilder.Equal(
 					$"Could not find {t.Name} with {prop.Name} ".ToInterpolatedString(
 						((StringToken)(SF.ParseTypeName(prop.PropertyType.Name).GetDefaultValue().ToString())).AsInterpolation()
 					),
@@ -740,11 +740,11 @@ namespace Sannel.House.Generator.Generators
 		{
 			List<StatementSyntax> statements = new List<StatementSyntax>();
 			statements.Add(SF.ExpressionStatement(
-					TestBuilder.AssertIsNotNull(SF.IdentifierName(result))
+					TestBuilder.NotNull(SF.IdentifierName(result))
 				));
 			statements.Add(
 					SF.ExpressionStatement(
-						TestBuilder.AssertIsFalse(
+						TestBuilder.False(
 							Extensions.MemberAccess(
 								SF.IdentifierName(result),
 								SF.IdentifierName("Success")
@@ -754,7 +754,7 @@ namespace Sannel.House.Generator.Generators
 				);
 			statements.Add(
 					SF.ExpressionStatement(
-						TestBuilder.AssertAreEqual(
+						TestBuilder.Equal(
 							errorCount.ToLiteral(),
 							result.Text.MemberAccess(
 								"Errors",
@@ -765,7 +765,7 @@ namespace Sannel.House.Generator.Generators
 				);
 			statements.Add(
 					SF.ExpressionStatement(
-						TestBuilder.AssertAreEqual(
+						TestBuilder.Equal(
 							message.ToLiteral(),
 							SF.ElementAccessExpression(
 								Extensions.MemberAccess(
@@ -782,7 +782,7 @@ namespace Sannel.House.Generator.Generators
 			{
 				statements.Add(
 						SF.ExpressionStatement(
-							TestBuilder.AssertIsNull(
+							TestBuilder.Null(
 								Extensions.MemberAccess(
 									SF.IdentifierName(result),
 									SF.IdentifierName("Data")
@@ -795,7 +795,7 @@ namespace Sannel.House.Generator.Generators
 			{
 				statements.Add(
 						SF.ExpressionStatement(
-							TestBuilder.AssertIsNotNull(
+							TestBuilder.NotNull(
 								Extensions.MemberAccess(
 									SF.IdentifierName(result),
 									SF.IdentifierName("Data")
@@ -959,19 +959,19 @@ namespace Sannel.House.Generator.Generators
 					)
 				),
 				SF.ExpressionStatement(
-					TestBuilder.AssertIsNotNull(SF.IdentifierName(result))
+					TestBuilder.NotNull(SF.IdentifierName(result))
 				),
 				SF.ExpressionStatement(
-					TestBuilder.AssertIsTrue(result.Text.MemberAccess("Success"), "Success was not true")
+					TestBuilder.True(result.Text.MemberAccess("Success"), "Success was not true")
 				),
 				SF.ExpressionStatement(
-					TestBuilder.AssertAreEqual(
+					TestBuilder.Equal(
 						0.ToLiteral(),
 						result.Text.MemberAccess("Errors", "Count")
 					)
 				),
 				SF.ExpressionStatement(
-					TestBuilder.AssertIsNotNull(result.Text.MemberAccess("Data"))
+					TestBuilder.NotNull(result.Text.MemberAccess("Data"))
 				)
 			);
 
@@ -979,7 +979,7 @@ namespace Sannel.House.Generator.Generators
 			{
 				blocks = blocks.AddStatements(
 					SF.ExpressionStatement(
-						TestBuilder.AssertIsTrue(
+						TestBuilder.True(
 							SF.BinaryExpression(SyntaxKind.GreaterThanExpression,
 								result.Text.MemberAccess("Data", key.Name),
 								0.ToLiteral()
@@ -993,7 +993,7 @@ namespace Sannel.House.Generator.Generators
 			{
 				blocks = blocks.AddStatements(
 					SF.ExpressionStatement(
-						TestBuilder.AssertIsTrue(
+						TestBuilder.True(
 							SF.BinaryExpression(SyntaxKind.NotEqualsExpression,
 								result.Text.MemberAccess("Data", key.Name),
 								SF.InvocationExpression(
@@ -1044,7 +1044,7 @@ namespace Sannel.House.Generator.Generators
 					)
 				),
 				SF.ExpressionStatement(
-					TestBuilder.AssertIsNotNull(SF.IdentifierName(first), "first was not set")
+					TestBuilder.NotNull(SF.IdentifierName(first), "first was not set")
 				),
 				SF.LocalDeclarationStatement(
 					Extensions.VariableDeclaration(
@@ -1062,7 +1062,7 @@ namespace Sannel.House.Generator.Generators
 				{
 					blocks = blocks.AddStatements(
 						SF.ExpressionStatement(
-							TestBuilder.AssertAreEqual(
+							TestBuilder.Equal(
 								first.Text.MemberAccess(prop.Name),
 								resultData.Text.MemberAccess(prop.Name)
 							)
@@ -1252,19 +1252,19 @@ namespace Sannel.House.Generator.Generators
 					)
 				),
 				SF.ExpressionStatement(
-					TestBuilder.AssertIsNotNull(SF.IdentifierName(result))
+					TestBuilder.NotNull(SF.IdentifierName(result))
 				),
 				SF.ExpressionStatement(
-					TestBuilder.AssertIsTrue(result.Text.MemberAccess("Success"), "Success was not true")
+					TestBuilder.True(result.Text.MemberAccess("Success"), "Success was not true")
 				),
 				SF.ExpressionStatement(
-					TestBuilder.AssertAreEqual(
+					TestBuilder.Equal(
 						0.ToLiteral(),
 						result.Text.MemberAccess("Errors", "Count")
 					)
 				),
 				SF.ExpressionStatement(
-					TestBuilder.AssertIsNotNull(result.Text.MemberAccess("Data"))
+					TestBuilder.NotNull(result.Text.MemberAccess("Data"))
 				)
 			);
 
@@ -1272,7 +1272,7 @@ namespace Sannel.House.Generator.Generators
 			{
 				blocks = blocks.AddStatements(
 					SF.ExpressionStatement(
-						TestBuilder.AssertIsTrue(
+						TestBuilder.True(
 							SF.BinaryExpression(SyntaxKind.GreaterThanExpression,
 								result.Text.MemberAccess("Data", key.Name),
 								0.ToLiteral()
@@ -1286,7 +1286,7 @@ namespace Sannel.House.Generator.Generators
 			{
 				blocks = blocks.AddStatements(
 					SF.ExpressionStatement(
-						TestBuilder.AssertIsTrue(
+						TestBuilder.True(
 							SF.BinaryExpression(SyntaxKind.NotEqualsExpression,
 								result.Text.MemberAccess("Data", key.Name),
 								SF.InvocationExpression(
@@ -1337,7 +1337,7 @@ namespace Sannel.House.Generator.Generators
 					)
 				),
 				SF.ExpressionStatement(
-					TestBuilder.AssertIsNotNull(SF.IdentifierName(first), "first was not set")
+					TestBuilder.NotNull(SF.IdentifierName(first), "first was not set")
 				),
 				SF.LocalDeclarationStatement(
 					Extensions.VariableDeclaration(
@@ -1355,7 +1355,7 @@ namespace Sannel.House.Generator.Generators
 				{
 					blocks = blocks.AddStatements(
 						SF.ExpressionStatement(
-							TestBuilder.AssertAreEqual(
+							TestBuilder.Equal(
 								first.Text.MemberAccess(prop.Name),
 								resultData.Text.MemberAccess(prop.Name)
 							)

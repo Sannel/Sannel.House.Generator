@@ -16,6 +16,48 @@ namespace Sannel.House.Generator
 {
 	public static class Extensions
 	{
+		public static StatementSyntax GenerateRandomObject(this Type t, string variableName)
+		{
+			var rand = new Random();
+
+			var pi = t.GetProperties();
+			var key = pi.GetKeyProperty();
+			var keyST = key.GetTypeSyntax();
+
+			var list = SF.SeparatedList<ExpressionSyntax>().Add(
+					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+						SF.IdentifierName(key.Name),
+						keyST.GetRandomValue(rand)
+					)
+				);
+
+			foreach(var p in pi)
+			{
+				if (!p.ShouldIgnore() && !p.IsKey())
+				{
+					var st = p.GetTypeSyntax();
+					list = list.Add(
+						SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+							SF.IdentifierName(p.Name),
+							st.GetRandomValue(rand)
+						)
+					);
+				}
+			}
+
+			return SF.LocalDeclarationStatement(
+				VariableDeclaration(variableName,
+					SF.EqualsValueClause(
+						SF.ObjectCreationExpression(SF.ParseTypeName(t.Name))
+						.AddArgumentListArguments()
+						.WithInitializer(
+							SF.InitializerExpression(SyntaxKind.ObjectInitializerExpression, list)
+						)
+					)
+				)
+			);
+		}
+
 		public static ElementAccessExpressionSyntax ElementAccess(this string name, int index)
 		{
 			return SF.ElementAccessExpression(SF.IdentifierName(name)).AddArgumentListArguments(SF.Argument(index.ToLiteral()));
@@ -24,6 +66,15 @@ namespace Sannel.House.Generator
 		public static ElementAccessExpressionSyntax ElementAccess(this string name, string index)
 		{
 			return SF.ElementAccessExpression(SF.IdentifierName(name)).AddArgumentListArguments(SF.Argument(index.ToLiteral()));
+		}
+
+		public static ElementAccessExpressionSyntax ElementAccess(this MemberAccessExpressionSyntax syntax, int index)
+		{
+			return SF.ElementAccessExpression(syntax).AddArgumentListArguments(SF.Argument(index.ToLiteral()));
+		}
+		public static ElementAccessExpressionSyntax ElementAccess(this MemberAccessExpressionSyntax syntax, string index)
+		{
+			return SF.ElementAccessExpression(syntax).AddArgumentListArguments(SF.Argument(index.ToLiteral()));
 		}
 
 		public static string ReplaceKeys(this string path, PropertyWithName pwn, RunConfig config)
@@ -156,10 +207,9 @@ namespace Sannel.House.Generator
 
 		public static ExpressionSyntax GetRandomValue(this TypeSyntax t, Random rand)
 		{
-			String type = t.ToString();
-			if (t is NullableTypeSyntax)
+			var type = t.ToString();
+			if (t is NullableTypeSyntax nt)
 			{
-				var nt = (NullableTypeSyntax)t;
 				type = nt.ElementType.ToString();
 			}
 
@@ -186,37 +236,25 @@ namespace Sannel.House.Generator
 					return (rand.NextDouble() > 0.5).ToLiteral();
 
 				case "String":
-					StringBuilder value = new StringBuilder();
-					int count = rand.Next(10, 30);
-					for(int i = 0; i < count; i++)
+					var value = new StringBuilder();
+					var count = rand.Next(10, 30);
+					for(var i = 0; i < count; i++)
 					{
-						char c = (char)rand.Next((int)'a', (int)'z');
+						var c = (char)rand.Next('a', 'z');
 						value.Append(c);
 					}
 					return value.ToString().ToLiteral();
 
 				case "DateTime":
-					return SF.ObjectCreationExpression(SF.ParseTypeName("DateTimeOffset"))
+					return SF.ObjectCreationExpression(SF.ParseTypeName("DateTime"))
 						.AddArgumentListArguments(
 							SF.Argument(rand.Next(1980, 2016).ToLiteral()), // Year
 							SF.Argument(rand.Next(1,12).ToLiteral()), // Month
 							SF.Argument(rand.Next(1, 28).ToLiteral()), // Day
 							SF.Argument(rand.Next(1,24).ToLiteral()), // Hour
 							SF.Argument(rand.Next(1, 60).ToLiteral()), // Minutes
-							SF.Argument(rand.Next(1, 60).ToLiteral()), // seconds
-							SF.Argument(
-								SF.InvocationExpression(
-									Extensions.MemberAccess(
-										SF.IdentifierName("TimeSpan"),
-										SF.IdentifierName("FromHours")
-									)
-								)
-								.AddArgumentListArguments(
-									SF.Argument(
-										rand.Next(-7, -4).ToLiteral()
-									)
-								)
-						));
+							SF.Argument(rand.Next(1, 60).ToLiteral()) // seconds
+						);
 
 				case "DateTimeOffset":
 					//new DateTimeOffset(2000, 2, 3, 3, 12, 13, TimeSpan.FromHours(-6));
@@ -499,7 +537,17 @@ namespace Sannel.House.Generator
 			return SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, left, right);
 		}
 
-		public static MemberAccessExpressionSyntax MemberAccess(this SyntaxToken left, String right, params String[] extra)
+		public static MemberAccessExpressionSyntax MemberAccess(this ExpressionSyntax left, string right)
+		{
+			return SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, left, SF.IdentifierName(right));
+		}
+
+		public static MemberAccessExpressionSyntax MemberAccess(this ExpressionSyntax left, string right, params string[] extra)
+		{
+			return MemberAccess(left, SF.IdentifierName(right), extra?.Select(i => SF.IdentifierName(i))?.ToArray());
+		}
+
+		public static MemberAccessExpressionSyntax MemberAccess(this SyntaxToken left, string right, params string[] extra)
 		{
 			return MemberAccess(SF.IdentifierName(left), SF.IdentifierName(right), extra?.Select(i => SF.IdentifierName(i))?.ToArray());
 		}
