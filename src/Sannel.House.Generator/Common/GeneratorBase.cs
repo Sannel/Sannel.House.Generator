@@ -37,7 +37,7 @@ namespace Sannel.House.Generator.Common
 			private set;
 		} 
 
-		public void Generate(PropertyWithName pwn, String baseSaveFolder, RunConfig config)
+		public void Generate(PropertyWithName pwn, string baseSaveFolder, RunConfig config)
 		{
 			TestBuilder = config.TestBuilder;
 			HttpBuilder = config.HttpBuilder;
@@ -55,7 +55,7 @@ namespace Sannel.House.Generator.Common
 			{
 				File.Delete(file);
 			}
-			using (StreamWriter writer = new StreamWriter(File.OpenWrite(file)))
+			using (var writer = new StreamWriter(File.OpenWrite(file)))
 			{
 				syntax.WriteTo(writer);
 				//formattedNode.WriteTo(writer);
@@ -78,10 +78,11 @@ namespace Sannel.House.Generator.Common
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.*/
+/* This is generated code so probably best not to edit it */
 ");
 			return comment;
 		}
 
-		protected abstract CompilationUnitSyntax internalGenerate(String propertyName, Type t);
+		protected abstract CompilationUnitSyntax internalGenerate(string propertyName, Type t);
 	}
 }

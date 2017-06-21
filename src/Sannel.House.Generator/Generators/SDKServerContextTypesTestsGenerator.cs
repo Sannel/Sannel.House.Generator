@@ -43,7 +43,7 @@ namespace Sannel.House.Generator.Generators
 							EqualsValueClause(
 								AwaitExpression(
 									InvocationExpression(
-										sc.MemberAccess("Devices", "GetPagedAsync")
+										sc.MemberAccess(propertyName, "GetPagedAsync")
 									).AddArgumentListArguments(
 										Argument(1.ToLiteral()),
 										Argument(20.ToLiteral())
@@ -138,7 +138,7 @@ namespace Sannel.House.Generator.Generators
 						IdentifierName(result),
 						AwaitExpression(
 							InvocationExpression(
-								sc.MemberAccess("Devices", "GetPagedAsync")
+								sc.MemberAccess(propertyName, "GetPagedAsync")
 							).AddArgumentListArguments(
 								Argument(1.ToLiteral()),
 								Argument(20.ToLiteral())
@@ -235,7 +235,7 @@ namespace Sannel.House.Generator.Generators
 					IdentifierName(result),
 					AwaitExpression(
 						InvocationExpression(
-							sc.MemberAccess("Devices", "GetPagedAsync")
+							sc.MemberAccess(propertyName, "GetPagedAsync")
 						).AddArgumentListArguments(
 							1.ToArgument(),
 							2.ToArgument()
@@ -251,36 +251,179 @@ namespace Sannel.House.Generator.Generators
 			var var1 = "var1";
 			var var2 = "var2";
 
-			blocks = blocks.AddStatements(
-				t.GenerateRandomObject(var1)
-			);
 			var rand = new Random();
-			Task.Delay(rand.Next(500, 1000)).Wait();
 			blocks = blocks.AddStatements(
-				t.GenerateRandomObject(var2)
+				t.GenerateRandomObject(var1, rand)
 			);
-			/*					
-								var device1 = new Device()
-								{
-									Id = 1,
-									Description = "testDescription",
-									Name = "testName",
-									IsReadOnly = true,
-									DisplayOrder = 0,
-									DateCreated = DateTime.UtcNow
-								};
 
-								var device2 = new Device()
-								{
-									Id = 2,
-									Description = "testDescription2",
-									Name = "testName2",
-									IsReadOnly = true,
-									DisplayOrder = 1,
-									DateCreated = DateTime.UtcNow
-								};
+			blocks = blocks.AddStatements(
+				t.GenerateRandomObject(var2, rand)
+			);
 
-			*/
+			blocks = blocks.AddStatements(
+				AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					mClient.MemberAccess("Get"),
+					ParenthesizedLambdaExpression(
+						Block(
+							ExpressionStatement(
+								TestBuilder.Equal(3.ToLiteral(), segments.MemberAccess("Length"))
+							),
+							ExpressionStatement(
+								TestBuilder.Equal(t.Name.ToLiteral(), IdentifierName(controller))
+							),
+							ExpressionStatement(
+								TestBuilder.Equal("GetPaged".ToLiteral(), segments.ElementAccess(0))
+							),
+							ExpressionStatement(
+								TestBuilder.Equal(1.ToLiteral(), segments.ElementAccess(1))
+							),
+							ExpressionStatement(
+								TestBuilder.Equal(20.ToLiteral(), segments.ElementAccess(2))
+							),
+							ReturnStatement(
+								ObjectCreationExpression(
+									GenericName("ClientResult")
+									.AddTypeArgumentListArguments(
+										GenericName("PagedResults")
+										.AddTypeArgumentListArguments(
+											ParseTypeName(t.Name)
+										)
+									)
+								).AddArgumentListArguments()
+								.WithInitializer(
+									InitializerExpression(SyntaxKind.ObjectInitializerExpression,
+										SingletonSeparatedList<ExpressionSyntax>(
+											AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+												IdentifierName("Data"),
+													ObjectCreationExpression(
+														GenericName("PagedResults")
+														.AddTypeArgumentListArguments(
+															ParseTypeName(t.Name)
+														)
+													).AddArgumentListArguments()
+													.WithInitializer(
+														InitializerExpression(SyntaxKind.ObjectInitializerExpression,
+															SingletonSeparatedList<ExpressionSyntax>(
+																AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+																	IdentifierName("Success"),
+																	true.ToLiteral()
+																)
+															).Add(
+																AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+																	IdentifierName("Data"),
+																	ObjectCreationExpression(GenericName("List").AddTypeArgumentListArguments(ParseTypeName(t.Name)))
+																	.AddArgumentListArguments()
+																	.WithInitializer(
+																		InitializerExpression(SyntaxKind.CollectionInitializerExpression,
+																			SeparatedList<ExpressionSyntax>()
+																			.Add(IdentifierName(var1))
+																			.Add(IdentifierName(var2))
+																		)
+																	)
+																)
+															).Add(
+																AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+																	IdentifierName("CurrentPage"),
+																	1.ToLiteral()
+																)
+															).Add(
+																AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+																	IdentifierName("PageSize"),
+																	2.ToLiteral()
+																)
+															).Add(
+																AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+																	IdentifierName("TotalResults"),
+																	20.ToLiteral()
+																)
+															)
+														)
+												)
+											)
+										).Add(
+											AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+												IdentifierName("Success"),
+												true.ToLiteral()
+											)
+										)
+									)
+								)
+							)
+						)
+					).AddParameterListParameters(
+						Parameter(Identifier(controller)),
+						Parameter(Identifier(segments))
+					)
+				).ToStatement()
+			);
+
+			var list = "list";
+			var actual = "actual";
+
+			blocks = blocks.AddStatements(
+				AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					IdentifierName(result),
+					AwaitExpression(
+						InvocationExpression(
+							sc.MemberAccess(propertyName, "GetPagedAsync")
+						).AddArgumentListArguments(
+							1.ToArgument(),
+							20.ToArgument()
+						)
+					)
+				).ToStatement(),
+				TestBuilder.True(result.MemberAccess("Success")).ToStatement(),
+				TestBuilder.NotNull(result.MemberAccess("Data")).ToStatement(),
+				TestBuilder.Equal(1.ToLiteral(), result.MemberAccess("CurrentPage")).ToStatement(),
+				TestBuilder.Equal(2.ToLiteral(), result.MemberAccess("PageSize")).ToStatement(),
+				TestBuilder.Equal(20.ToLiteral(), result.MemberAccess("TotalResults")).ToStatement(),
+				LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						list,
+						EqualsValueClause(
+							InvocationExpression(
+								result.MemberAccess("Data", "ToList")
+							).AddArgumentListArguments()
+						)
+					)
+				),
+				TestBuilder.Equal(2.ToLiteral(), list.MemberAccess("Count")).ToStatement(),
+				LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						actual,
+						EqualsValueClause(
+							list.ElementAccess(0)
+						)
+					)
+				),
+				TestBuilder.NotNull(IdentifierName(actual)).ToStatement()
+			);
+
+			var pi = t.GetProperties();
+			foreach(var p in pi)
+			{
+				if (!p.ShouldIgnore())
+				{
+					blocks = blocks.AddStatements(
+						TestBuilder.Equal(var1.MemberAccess(p.Name), actual.MemberAccess(p.Name)).ToStatement()
+					);
+				}
+			}
+			blocks = blocks.AddStatements(
+				AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					IdentifierName(actual),
+					list.ElementAccess(1)
+				).ToStatement()
+			);
+			foreach(var p in pi)
+			{
+				if (!p.ShouldIgnore())
+				{
+					blocks = blocks.AddStatements(
+						TestBuilder.Equal(var2.MemberAccess(p.Name), actual.MemberAccess(p.Name)).ToStatement()
+					);
+				}
+			}
 
 			method = method.WithBody(Block(
 				UsingStatement(
@@ -294,7 +437,7 @@ namespace Sannel.House.Generator.Generators
 					)))
 				).WithDeclaration(
 					Extensions.VariableDeclaration(mClient,
-						EqualsValueClause(ObjectCreationExpression(ParseTypeName("MockHttpClient")))
+						EqualsValueClause(ObjectCreationExpression(ParseTypeName("MockHttpClient")).AddArgumentListArguments())
 					)
 				)
 				));

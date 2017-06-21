@@ -16,10 +16,8 @@ namespace Sannel.House.Generator
 {
 	public static class Extensions
 	{
-		public static StatementSyntax GenerateRandomObject(this Type t, string variableName)
+		public static StatementSyntax GenerateRandomObject(this Type t, string variableName, Random rand)
 		{
-			var rand = new Random();
-
 			var pi = t.GetProperties();
 			var key = pi.GetKeyProperty();
 			var keyST = key.GetTypeSyntax();
