@@ -139,17 +139,8 @@
 				{
 						"Name": "Server Context Type Tests Generator",
 						"Directory": "SDK\\Tests\\Context",
-						"FileName": "{TypeName}Context.Tests.Generated.cs",
+						"FileName": "{TypeName}ContextTests.Generated.cs",
 						"Generator": "SDKServerTypeTestsContextGenerator",
-						"TestBuilder": "XUnit",
-						"HttpBuilder": "HttpBuilder",
-						"TaskBuilder": "TaskBuilder"
-				},
-				{
-						"Name": "Server Context Tests Generator",
-						"Directory": "SDK\\Tests",
-						"FileName": "ServerContextTests.Generated.cs",
-						"Generator": "ServerContextTestsGenerator",
 						"TestBuilder": "XUnit",
 						"HttpBuilder": "HttpBuilder",
 						"TaskBuilder": "TaskBuilder"

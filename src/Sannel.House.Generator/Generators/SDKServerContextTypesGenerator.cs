@@ -26,6 +26,8 @@ namespace Sannel.House.Generator.Generators
 {
 	public class SDKServerContextTypesGenerator : GeneratorBase
 	{
+		private readonly string context = "context";
+
 		private ClassDeclarationSyntax addConstructor(ClassDeclarationSyntax @class)
 		{
 			var cons = ConstructorDeclaration(@class.Identifier)
@@ -102,7 +104,7 @@ namespace Sannel.House.Generator.Generators
 				GenericName("Task").AddTypeArgumentListArguments(
 					GenericName("PagedResults").AddTypeArgumentListArguments(ParseTypeName(t.Name))), 
 				"GetPagedAsync")
-				.AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.AsyncKeyword))
+				.AddModifiers(Token(SyntaxKind.PublicKeyword))
 				.AddParameterListParameters(
 					Parameter(Identifier("page")).WithType(ParseTypeName("int")),
 					Parameter(Identifier("pageSize")).WithType(ParseTypeName("int"))
@@ -117,56 +119,180 @@ namespace Sannel.House.Generator.Generators
 ")
 				);
 
-			var loginResult = "loginResult";
-			var blocks = Block(LocalDeclarationStatement(Extensions.VariableDeclaration(loginResult,
-				EqualsValueClause(
+			/*		public Task<PagedResults<Device>> GetPagedAsync(int page, int pageSize)
+		{
+			return MakeRequestAsync(() =>
+			{
+				return context.HttpClient.GetAsync<PagedResults<Device>>("Device", "GetPaged", page, pageSize);
+			});
+		}
+*/
+			var blocks = Block(
+				ReturnStatement(
 					InvocationExpression(
-						GenericName("VerifyLoggedIn")
-						.AddTypeArgumentListArguments(
-							GenericName("PagedResults").AddTypeArgumentListArguments(ParseTypeName(t.Name))
-						)
-					)
-				))));
-			blocks = blocks.AddStatements(
-				IfStatement(
-					PrefixUnaryExpression(
-						SyntaxKind.LogicalNotExpression,
-						loginResult.MemberAccess("Success")
-					),
-					Block(
-						ReturnStatement(
-							IdentifierName(loginResult)
+						IdentifierName("MakeRequestAsync")
+					).AddArgumentListArguments(
+						Argument(
+							ParenthesizedLambdaExpression(
+								Block(
+									ReturnStatement(
+										InvocationExpression(
+											context.MemberAccess("HttpClient")
+											.MemberAccess(
+												GenericName("GetAsync")
+												.AddTypeArgumentListArguments(
+													GenericName("PagedResults")
+													.AddTypeArgumentListArguments(
+														ParseTypeName(t.Name)
+													)
+												)
+											)
+										).AddArgumentListArguments(
+											t.Name.ToArgument(),
+											"GetPaged".ToArgument(),
+											Argument(IdentifierName("page")),
+											Argument(IdentifierName("pageSize"))
+										)
+									)
+								)
+							)
 						)
 					)
 				)
 			);
 
-			var results = "results";
 
-			blocks = blocks.AddStatements(
-				LocalDeclarationStatement(
-					Extensions.VariableDeclaration(
-						results,
-						EqualsValueClause(
-							AwaitExpression(
-								InvocationExpression(
-									"context".MemberAccess(
-										"HttpClient"
-									).MemberAccess(
-										GenericName(
-											"GetAsync"
-										).AddTypeArgumentListArguments(
-											GenericName("PagedResults")
-											.AddTypeArgumentListArguments(
-												ParseTypeName(t.Name)
+			return method.WithBody(blocks);
+		}
+		#endregion
+#region GetBy Id
+		private MethodDeclarationSyntax generateGetById(string propertyName, Type t)
+		{
+			var pi = t.GetProperties();
+			var id = "id";
+			var method = MethodDeclaration(
+				GenericName("Task").AddTypeArgumentListArguments(
+					GenericName("Result").AddTypeArgumentListArguments(
+						ParseTypeName(t.Name)
+					)
+				),
+				"GetAsync")
+				.AddModifiers(Token(SyntaxKind.PublicKeyword))
+				.AddParameterListParameters(
+					Parameter(Identifier(id)).WithType(pi.GetKeyProperty().GetTypeSyntax())
+				)
+				.WithLeadingTrivia(
+					ParseLeadingTrivia($@"/// <summary>
+/// Gets the {t.Name} by its <paramref name=""id""/>.
+/// </summary>
+/// <param name=""id"">The identifier.</param>
+/// <returns></returns>
+")
+				);
+
+			var blocks = Block(
+				ReturnStatement(
+					InvocationExpression(
+						IdentifierName("MakeRequestAsync")
+					).AddArgumentListArguments(
+						Argument(
+							ParenthesizedLambdaExpression(
+								Block(
+									ReturnStatement(
+										InvocationExpression(
+											context.MemberAccess("HttpClient")
+											.MemberAccess(
+												GenericName("GetAsync")
+												.AddTypeArgumentListArguments(
+													GenericName("Result")
+													.AddTypeArgumentListArguments(
+														ParseTypeName(t.Name)
+													)
+												)
+											)
+										).AddArgumentListArguments(
+											t.Name.ToArgument(),
+											Argument(IdentifierName(id))
+										)
+									)
+								)
+							)
+						)
+					)
+				)
+			);
+
+			return method.WithBody(blocks);
+		}
+#endregion
+#region Post
+		private MethodDeclarationSyntax generatePost(string propertyName, Type t)
+		{
+			var pi = t.GetProperties();
+			var parameterName = t.Name.ToLower();
+
+			var method = MethodDeclaration(
+				GenericName("Task").AddTypeArgumentListArguments(
+					GenericName("Result").AddTypeArgumentListArguments(
+						ParseTypeName(t.Name)
+					)
+				),
+				"PostAsync")
+				.AddModifiers(Token(SyntaxKind.PublicKeyword))
+				.AddParameterListParameters(
+					Parameter(Identifier(parameterName)).WithType(ParseTypeName(t.Name))
+				)
+				.WithLeadingTrivia(
+					ParseLeadingTrivia($@"/// <summary>
+/// Posts the passed <paramref name=""{parameterName}""/> to the server.
+/// </summary>
+/// <param name=""{parameterName}"">The {parameterName}.</param>
+/// <returns></returns>
+
+")
+				);
+
+			var blocks = Block(
+				ReturnStatement(
+					InvocationExpression(
+						IdentifierName("MakeRequestAsync")
+					).AddArgumentListArguments(
+						Argument(
+							ParenthesizedLambdaExpression(
+								Block(
+									ReturnStatement(
+										InvocationExpression(
+											context.MemberAccess("HttpClient")
+											.MemberAccess(
+												GenericName("PostAsync")
+												.AddTypeArgumentListArguments(
+													GenericName("Result")
+													.AddTypeArgumentListArguments(
+														ParseTypeName(t.Name)
+													)
+												)
+											)
+										).AddArgumentListArguments(
+											t.Name.ToArgument(),
+											Argument(
+												BinaryExpression(SyntaxKind.CoalesceExpression,
+													IdentifierName(parameterName),
+													ThrowExpression(
+														ObjectCreationExpression(ParseTypeName("ArgumentNullException"))
+														.AddArgumentListArguments(
+															Argument(
+																InvocationExpression(
+																	IdentifierName("nameof")
+																).AddArgumentListArguments(
+																	Argument(IdentifierName(parameterName))
+																)
+															)
+														)
+													)
+												)
 											)
 										)
 									)
-								).AddArgumentListArguments(
-									Argument(t.Name.ToLiteral()),
-									Argument("GetPaged".ToLiteral()),
-									Argument(IdentifierName("page")),
-									Argument(IdentifierName("pageSize"))
 								)
 							)
 						)
@@ -174,48 +300,163 @@ namespace Sannel.House.Generator.Generators
 				)
 			);
 
-			blocks = blocks.AddStatements(
-				IfStatement(
-					BinaryExpression(SyntaxKind.LogicalAndExpression,
-						results.MemberAccess("Success"),
-						BinaryExpression(SyntaxKind.NotEqualsExpression,
-							results.MemberAccess("Data"),
-							LiteralExpression(SyntaxKind.NullLiteralExpression)
-						)
-					),
-					Block(
-						ReturnStatement(
-							results.MemberAccess("Data")
-						)
+			return method.WithBody(blocks);
+		}
+#endregion
+#region Put
+		private MethodDeclarationSyntax generatePut(string propertyName, Type t)
+		{
+			var pi = t.GetProperties();
+			var parameterName = t.Name.ToLower();
+
+			var method = MethodDeclaration(
+				GenericName("Task").AddTypeArgumentListArguments(
+					GenericName("Result").AddTypeArgumentListArguments(
+						ParseTypeName(t.Name)
 					)
-				).WithElse(
-					ElseClause(
-						Block(
-							ReturnStatement(
-								InvocationExpression(
-									IdentifierName("CreateRequestError")
-								).AddArgumentListArguments(
-									Argument(IdentifierName(results))
+				),
+				"PutAsync")
+				.AddModifiers(Token(SyntaxKind.PublicKeyword))
+				.AddParameterListParameters(
+					Parameter(Identifier(parameterName)).WithType(ParseTypeName(t.Name))
+				)
+				.WithLeadingTrivia(
+					ParseLeadingTrivia($@"/// <summary>
+/// Puts the passed <paramref name=""{parameterName}""/> to the server.
+/// </summary>
+/// <param name=""{parameterName}"">The {parameterName}.</param>
+/// <returns></returns>
+
+")
+				);
+
+			var blocks = Block(
+				ReturnStatement(
+					InvocationExpression(
+						IdentifierName("MakeRequestAsync")
+					).AddArgumentListArguments(
+						Argument(
+							ParenthesizedLambdaExpression(
+								Block(
+									ReturnStatement(
+										InvocationExpression(
+											context.MemberAccess("HttpClient")
+											.MemberAccess(
+												GenericName("PutAsync")
+												.AddTypeArgumentListArguments(
+													GenericName("Result")
+													.AddTypeArgumentListArguments(
+														ParseTypeName(t.Name)
+													)
+												)
+											)
+										).AddArgumentListArguments(
+											t.Name.ToArgument(),
+											Argument(
+												BinaryExpression(SyntaxKind.CoalesceExpression,
+													IdentifierName(parameterName),
+													ThrowExpression(
+														ObjectCreationExpression(ParseTypeName("ArgumentNullException"))
+														.AddArgumentListArguments(
+															Argument(
+																InvocationExpression(
+																	IdentifierName("nameof")
+																).AddArgumentListArguments(
+																	Argument(IdentifierName(parameterName))
+																)
+															)
+														)
+													)
+												)
+											)
+										)
+									)
 								)
 							)
 						)
 					)
 				)
 			);
-			/*
 
-			var pResults = await context.HttpClient.GetAsync<PagedResults<Device>>("device", "GetPaged", page, pageSize);
+			return method.WithBody(blocks);
+		}
+#endregion
+#region Delete
+		private MethodDeclarationSyntax generateDelete(string propertyName, Type t)
+		{
+			var pi = t.GetProperties();
+			var parameterName = t.Name.ToLower();
 
-			if (pResults.Success && pResults.Data != null)
-			{
-				return pResults.Data;
-			}
-			else
-			{
-				return CreateRequestError(pResults);
-			}
-			
-			 */
+			var method = MethodDeclaration(
+				GenericName("Task").AddTypeArgumentListArguments(
+					GenericName("Result").AddTypeArgumentListArguments(
+						ParseTypeName(t.Name)
+					)
+				),
+				"DeleteAsync")
+				.AddModifiers(Token(SyntaxKind.PublicKeyword))
+				.AddParameterListParameters(
+					Parameter(Identifier(parameterName)).WithType(ParseTypeName(t.Name))
+				)
+				.WithLeadingTrivia(
+					ParseLeadingTrivia($@"/// <summary>
+/// Deletes the passed <paramref name=""{parameterName}""/> to the server.
+/// </summary>
+/// <param name=""{parameterName}"">The {parameterName}.</param>
+/// <returns></returns>
+
+")
+				);
+
+			var blocks = Block(
+				ReturnStatement(
+					InvocationExpression(
+						IdentifierName("MakeRequestAsync")
+					).AddArgumentListArguments(
+						Argument(
+							ParenthesizedLambdaExpression(
+								Block(
+									ReturnStatement(
+										InvocationExpression(
+											context.MemberAccess("HttpClient")
+											.MemberAccess(
+												GenericName("DeleteAsync")
+												.AddTypeArgumentListArguments(
+													GenericName("Result")
+													.AddTypeArgumentListArguments(
+														ParseTypeName(t.Name)
+													)
+												)
+											)
+										).AddArgumentListArguments(
+											t.Name.ToArgument(),
+											Argument(
+												ParenthesizedExpression(
+													BinaryExpression(SyntaxKind.CoalesceExpression,
+														IdentifierName(parameterName),
+														ThrowExpression(
+															ObjectCreationExpression(ParseTypeName("ArgumentNullException"))
+															.AddArgumentListArguments(
+																Argument(
+																	InvocationExpression(
+																		IdentifierName("nameof")
+																	).AddArgumentListArguments(
+																		Argument(IdentifierName(parameterName))
+																	)
+																)
+															)
+														)
+													)
+												).MemberAccess(pi.GetKeyProperty().Name)
+											)
+										)
+									)
+								)
+							)
+						)
+					)
+				)
+			);
 
 			return method.WithBody(blocks);
 		}
@@ -245,6 +486,25 @@ namespace Sannel.House.Generator.Generators
 				@class = @class.AddMembers(generatePagedMethod(propertyName, t));
 				@class = @class.AddMembers(generatePagedMethodWithPage(propertyName, t));
 				@class = @class.AddMembers(generatePagedMethodWithPageAndPageSize(propertyName, t));
+			}
+			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.GetWithId))
+			{
+				@class = @class.AddMembers(generateGetById(propertyName, t));
+			}
+
+			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Post))
+			{
+				@class = @class.AddMembers(generatePost(propertyName, t));
+			}
+
+			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Put))
+			{
+				@class = @class.AddMembers(generatePut(propertyName, t));
+			}
+
+			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Delete))
+			{
+				@class = @class.AddMembers(generateDelete(propertyName, t));
 			}
 
 			unit = unit.AddMembers(NamespaceDeclaration(IdentifierName("Sannel.House.ServerSDK.Context")).AddMembers(@class));
