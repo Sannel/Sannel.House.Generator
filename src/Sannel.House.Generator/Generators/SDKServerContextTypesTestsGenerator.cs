@@ -450,6 +450,7 @@ namespace Sannel.House.Generator.Generators
 			var method = MethodDeclaration(ParseTypeName("Task"), "GetTests")
 							.AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.AsyncKeyword))
 							.AddAttributeLists(AttributeList().AddAttributes(TestBuilder.GetMethodAttribute()));
+			var rand = new Random();
 
 			var mClient = "mClient";
 			var sc = "sc";
@@ -457,6 +458,8 @@ namespace Sannel.House.Generator.Generators
 			var pi = t.GetProperties();
 			var key = pi.GetKeyProperty();
 			var keyst = key.GetTypeSyntax();
+			var keyId = "keyid";
+			var keyvalue = IdentifierName(keyId);
 
 			var blocks = Block(
 					LocalDeclarationStatement(
@@ -469,6 +472,13 @@ namespace Sannel.House.Generator.Generators
 										Argument(keyst.GetDefaultValue())
 									)
 								)
+							)
+						)
+					),
+					LocalDeclarationStatement(
+						Extensions.VariableDeclaration(keyId,
+							EqualsValueClause(
+								CastExpression(keyst, keyst.GetRandomValue(rand)) // ensure this is the correct type
 							)
 						)
 					),
@@ -501,16 +511,13 @@ namespace Sannel.House.Generator.Generators
 						ParenthesizedLambdaExpression(
 							Block(
 								ExpressionStatement(
-									TestBuilder.Equal(3.ToLiteral(), segments.MemberAccess("Length"))
+									TestBuilder.Equal(1.ToLiteral(), segments.MemberAccess("Length"))
 								),
 								ExpressionStatement(
 									TestBuilder.Equal(t.Name.ToLiteral(), IdentifierName(controller))
 								),
 								ExpressionStatement(
-									TestBuilder.Equal("Get".ToLiteral(), segments.ElementAccess(0))
-								),
-								ExpressionStatement(
-									TestBuilder.Equal(keyst.GetDefaultValue(), segments.ElementAccess(1))
+									TestBuilder.Equal(keyvalue, segments.ElementAccess(0))
 								),
 								ReturnStatement(
 									InvocationExpression(
@@ -518,7 +525,7 @@ namespace Sannel.House.Generator.Generators
 											ObjectCreationExpression(
 												GenericName("ClientResult")
 													.AddTypeArgumentListArguments(
-														GenericName("PagedResults")
+														GenericName("Result")
 															.AddTypeArgumentListArguments(
 																ParseTypeName(t.Name)
 															)
@@ -557,7 +564,7 @@ namespace Sannel.House.Generator.Generators
 							InvocationExpression(
 								sc.MemberAccess(propertyName, "GetAsync")
 							).AddArgumentListArguments(
-								Argument(1.ToLiteral())
+								Argument(keyvalue)
 							)
 						)
 					)
@@ -577,22 +584,19 @@ namespace Sannel.House.Generator.Generators
 					ParenthesizedLambdaExpression(
 						Block(
 							ExpressionStatement(
-								TestBuilder.Equal(3.ToLiteral(), segments.MemberAccess("Length"))
+								TestBuilder.Equal(1.ToLiteral(), segments.MemberAccess("Length"))
 							),
 							ExpressionStatement(
 								TestBuilder.Equal(t.Name.ToLiteral(), IdentifierName(controller))
 							),
 							ExpressionStatement(
-								TestBuilder.Equal("Get".ToLiteral(), segments.ElementAccess(0))
-							),
-							ExpressionStatement(
-								TestBuilder.Equal(keyst.GetDefaultValue(), segments.ElementAccess(1))
+								TestBuilder.Equal(keyvalue, segments.ElementAccess(0))
 							),
 							ReturnStatement(
 								ObjectCreationExpression(
 									GenericName("ClientResult")
 									.AddTypeArgumentListArguments(
-										GenericName("PagedResults")
+										GenericName("Result")
 										.AddTypeArgumentListArguments(
 											ParseTypeName(t.Name)
 										)
@@ -605,7 +609,7 @@ namespace Sannel.House.Generator.Generators
 												IdentifierName("Data"),
 												InvocationExpression(
 													ObjectCreationExpression(
-														GenericName("PagedResults")
+														GenericName("Result")
 														.AddTypeArgumentListArguments(
 															ParseTypeName(t.Name)
 														)
@@ -650,8 +654,7 @@ namespace Sannel.House.Generator.Generators
 						InvocationExpression(
 							sc.MemberAccess(propertyName, "GetAsync")
 						).AddArgumentListArguments(
-							1.ToArgument(),
-							2.ToArgument()
+							Argument(keyvalue)
 						)
 					)
 				).ToStatement(),
@@ -663,9 +666,8 @@ namespace Sannel.House.Generator.Generators
 
 			var var1 = "var1";
 
-			var rand = new Random();
 			blocks = blocks.AddStatements(
-				t.GenerateRandomObject(var1, rand)
+				t.GenerateRandomObject(var1, rand, keyvalue)
 			);
 
 			blocks = blocks.AddStatements(
@@ -674,22 +676,19 @@ namespace Sannel.House.Generator.Generators
 					ParenthesizedLambdaExpression(
 						Block(
 							ExpressionStatement(
-								TestBuilder.Equal(3.ToLiteral(), segments.MemberAccess("Length"))
+								TestBuilder.Equal(1.ToLiteral(), segments.MemberAccess("Length"))
 							),
 							ExpressionStatement(
 								TestBuilder.Equal(t.Name.ToLiteral(), IdentifierName(controller))
 							),
 							ExpressionStatement(
-								TestBuilder.Equal("Get".ToLiteral(), segments.ElementAccess(0))
-							),
-							ExpressionStatement(
-								TestBuilder.Equal(1.ToLiteral(), segments.ElementAccess(1))
+								TestBuilder.Equal(keyvalue, segments.ElementAccess(0))
 							),
 							ReturnStatement(
 								ObjectCreationExpression(
 									GenericName("ClientResult")
 									.AddTypeArgumentListArguments(
-										GenericName("PagedResults")
+										GenericName("Result")
 										.AddTypeArgumentListArguments(
 											ParseTypeName(t.Name)
 										)
@@ -701,7 +700,7 @@ namespace Sannel.House.Generator.Generators
 											AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 												IdentifierName("Data"),
 													ObjectCreationExpression(
-														GenericName("PagedResults")
+														GenericName("Result")
 														.AddTypeArgumentListArguments(
 															ParseTypeName(t.Name)
 														)
@@ -716,29 +715,7 @@ namespace Sannel.House.Generator.Generators
 															).Add(
 																AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 																	IdentifierName("Data"),
-																	ObjectCreationExpression(GenericName("List").AddTypeArgumentListArguments(ParseTypeName(t.Name)))
-																	.AddArgumentListArguments()
-																	.WithInitializer(
-																		InitializerExpression(SyntaxKind.CollectionInitializerExpression,
-																			SeparatedList<ExpressionSyntax>()
-																			.Add(IdentifierName(var1))
-																		)
-																	)
-																)
-															).Add(
-																AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
-																	IdentifierName("CurrentPage"),
-																	1.ToLiteral()
-																)
-															).Add(
-																AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
-																	IdentifierName("PageSize"),
-																	2.ToLiteral()
-																)
-															).Add(
-																AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
-																	IdentifierName("TotalResults"),
-																	20.ToLiteral()
+																	IdentifierName(var1)
 																)
 															)
 														)
@@ -761,7 +738,6 @@ namespace Sannel.House.Generator.Generators
 				).ToStatement()
 			);
 
-			var list = "list";
 			var actual = "actual";
 
 			blocks = blocks.AddStatements(
@@ -771,32 +747,17 @@ namespace Sannel.House.Generator.Generators
 						InvocationExpression(
 							sc.MemberAccess(propertyName, "GetAsync")
 						).AddArgumentListArguments(
-							1.ToArgument(),
-							20.ToArgument()
+							Argument(keyvalue)
 						)
 					)
 				).ToStatement(),
 				TestBuilder.True(result.MemberAccess("Success")).ToStatement(),
 				TestBuilder.NotNull(result.MemberAccess("Data")).ToStatement(),
-				TestBuilder.Equal(1.ToLiteral(), result.MemberAccess("CurrentPage")).ToStatement(),
-				TestBuilder.Equal(2.ToLiteral(), result.MemberAccess("PageSize")).ToStatement(),
-				TestBuilder.Equal(20.ToLiteral(), result.MemberAccess("TotalResults")).ToStatement(),
-				LocalDeclarationStatement(
-					Extensions.VariableDeclaration(
-						list,
-						EqualsValueClause(
-							InvocationExpression(
-								result.MemberAccess("Data", "ToList")
-							).AddArgumentListArguments()
-						)
-					)
-				),
-				TestBuilder.Equal(2.ToLiteral(), list.MemberAccess("Count")).ToStatement(),
 				LocalDeclarationStatement(
 					Extensions.VariableDeclaration(
 						actual,
 						EqualsValueClause(
-							list.ElementAccess(0)
+							result.MemberAccess("Data")
 						)
 					)
 				),
@@ -812,12 +773,6 @@ namespace Sannel.House.Generator.Generators
 					);
 				}
 			}
-			blocks = blocks.AddStatements(
-				AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
-					IdentifierName(actual),
-					list.ElementAccess(1)
-				).ToStatement()
-			);
 
 			method = method.WithBody(Block(
 				UsingStatement(

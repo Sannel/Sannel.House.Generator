@@ -16,7 +16,7 @@ namespace Sannel.House.Generator
 {
 	public static class Extensions
 	{
-		public static StatementSyntax GenerateRandomObject(this Type t, string variableName, Random rand)
+		public static StatementSyntax GenerateRandomObject(this Type t, string variableName, Random rand, ExpressionSyntax keyValue=null)
 		{
 			var pi = t.GetProperties();
 			var key = pi.GetKeyProperty();
@@ -25,7 +25,7 @@ namespace Sannel.House.Generator
 			var list = SF.SeparatedList<ExpressionSyntax>().Add(
 					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 						SF.IdentifierName(key.Name),
-						keyST.GetRandomValue(rand)
+						keyValue ?? keyST.GetRandomValue(rand)
 					)
 				);
 
