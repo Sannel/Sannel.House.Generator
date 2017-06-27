@@ -819,7 +819,8 @@ namespace Sannel.House.Generator.Generators
 				LocalDeclarationStatement(
 					Extensions.VariableDeclaration(
 						keyId,
-						EqualsValueClause(keyst.GetRandomValue(rand))
+						EqualsValueClause(keyst.GetRandomValue(rand)),
+						key.PropertyType.Name
 					)
 				),
 				LocalDeclarationStatement(
@@ -1063,7 +1064,7 @@ namespace Sannel.House.Generator.Generators
 													),
 													AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 														"Data".ToIN(),
-														CastExpression(t.GetTypeSyntax(), var1.ToIN())
+														CastExpression(t.GetTypeSyntax(), model.ToIN())
 													)
 												)
 											)
@@ -1420,7 +1421,7 @@ namespace Sannel.House.Generator.Generators
 													),
 													AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 														"Data".ToIN(),
-														CastExpression(t.GetTypeSyntax(), var1.ToIN())
+														CastExpression(t.GetTypeSyntax(), model.ToIN())
 													)
 												)
 											)
@@ -1508,6 +1509,356 @@ namespace Sannel.House.Generator.Generators
 
 			return method;
 		}
+		private MethodDeclarationSyntax generateDeleteTest(string propertyName, Type t)
+		{
+			var method = MethodDeclaration(ParseTypeName("Task"), "DeleteTests")
+							.AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.AsyncKeyword))
+							.AddAttributeLists(AttributeList().AddAttributes(TestBuilder.GetMethodAttribute()));
+
+			var mClient = "mClient";
+			var sc = "sc";
+			var result = "result";
+			var pi = t.GetProperties();
+			var key = pi.GetKeyProperty();
+			var keyst = key.GetTypeSyntax();
+			var keyId = "keyid";
+			var keyvalue = IdentifierName(keyId);
+			var var1 = "var1";
+			var controller = "controller";
+			var @params = "@params";
+			var rand = new Random();
+
+			var blocks = Block(
+				LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						keyId,
+						EqualsValueClause(keyst.GetRandomValue(rand)),
+						key.PropertyType.Name
+					)
+				),
+				LocalDeclarationStatement(
+					Extensions.VariableDeclaration(var1,
+						EqualsValueClause(LiteralExpression(SyntaxKind.NullLiteralExpression)),
+						t.Name
+					)
+				),
+				LocalDeclarationStatement(
+					VariableDeclaration(GenericName("Result").AddTypeArgumentListArguments(ParseTypeName(t.Name)))
+					.WithVariables(new SeparatedSyntaxList<VariableDeclaratorSyntax>()
+					.Add(
+						VariableDeclarator(result)
+						.WithInitializer(EqualsValueClause(LiteralExpression(SyntaxKind.NullLiteralExpression)))
+					))
+				)
+			);
+
+			blocks = blocks.AddStatements(
+				AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					IdentifierName(result),
+					AwaitExpression(
+						InvocationExpression(
+							sc.MemberAccess(propertyName, "DeleteAsync")
+						).AddArgumentListArguments(
+							Argument(IdentifierName(var1))
+						)
+					)
+				).ToStatement(),
+				TestBuilder.False(result.MemberAccess("Success")).ToStatement(),
+				TestBuilder.NotNull(result.MemberAccess("Errors", "Count")).ToStatement(),
+				TestBuilder.Equal("Errors".MemberAccess("ServerContext_PleaseLogin"), result.MemberAccess("Errors").ElementAccess(0)).ToStatement(),
+				AwaitExpression(
+					InvocationExpression(
+						sc.MemberAccess("FakeLoginAsync")
+					).AddArgumentListArguments(
+						Argument(IdentifierName(mClient))
+					)
+				).ToStatement()
+			);
+
+
+			blocks = blocks.AddStatements(
+				AwaitExpression(
+					TestBuilder.ThrowsAsync<ArgumentNullException>(
+						ParenthesizedLambdaExpression(
+							InvocationExpression(sc.MemberAccess(propertyName, "DeleteAsync"))
+							.AddArgumentListArguments(
+								Argument(IdentifierName(var1))
+							)
+						)
+					)
+				).ToStatement()
+			);
+
+			blocks = blocks.AddStatements(
+				t.GenerateRandomObject(var1, rand, keyvalue, false)
+			);
+
+			blocks = blocks.AddStatements(
+				AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					mClient.MemberAccess("DeleteMethod"),
+					ParenthesizedLambdaExpression(
+						Block(
+							TestBuilder.Equal(t.Name.ToLiteral(), controller.ToIN()).ToStatement(),
+							TestBuilder.Equal(1.ToLiteral(), @params.MemberAccess("Length")).ToStatement(),
+							TestBuilder.Equal(keyvalue, @params.ElementAccess(0)).ToStatement(),
+							ReturnStatement(
+								InvocationExpression(
+									ObjectCreationExpression(
+										GenericName("ClientResult")
+										.AddTypeArgumentListArguments(
+											GenericName("Result")
+											.AddTypeArgumentListArguments(
+												ParseTypeName(t.Name)
+											)
+										)
+									).AddArgumentListArguments()
+									.WithInitializer(
+										InitializerExpression(SyntaxKind.ObjectInitializerExpression)
+										.AddExpressions(
+											AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+												"Success".ToIN(),
+												false.ToLiteral()
+											)
+										)
+									).MemberAccess("AddError")
+								).AddArgumentListArguments(
+									"Request Error".ToArgument()
+								)
+							)
+						)
+					)
+					.AddParameterListParameters(
+						Parameter(Identifier(controller)),
+						Parameter(Identifier(@params))
+					)
+				).ToStatement()
+			);
+
+			blocks = blocks.AddStatements(
+				AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					result.ToIN(),
+					AwaitExpression(
+						InvocationExpression(
+							sc.MemberAccess(propertyName, "DeleteAsync")
+						).AddArgumentListArguments(
+							Argument(var1.ToIN())
+						)
+					)
+				).ToStatement(),
+				TestBuilder.False(result.MemberAccess("Success")).ToStatement(),
+				TestBuilder.NotNull(result.MemberAccess("Errors")).ToStatement(),
+				TestBuilder.Equal(2.ToLiteral(), result.MemberAccess("Errors", "Count")).ToStatement(),
+				TestBuilder.Equal("Request Error".ToLiteral(), result.MemberAccess("Errors").ElementAccess(0)).ToStatement(),
+				TestBuilder.Equal("Errors".MemberAccess("ServerContext_ErrorMakingRequest"), result.MemberAccess("Errors").ElementAccess(1)).ToStatement()
+			);
+
+
+			blocks = blocks.AddStatements(
+				AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					mClient.MemberAccess("DeleteMethod"),
+					ParenthesizedLambdaExpression(
+						Block(
+							TestBuilder.Equal(t.Name.ToLiteral(), controller.ToIN()).ToStatement(),
+							TestBuilder.Equal(1.ToLiteral(), @params.MemberAccess("Length")).ToStatement(),
+							TestBuilder.Equal(keyvalue, @params.ElementAccess(0)).ToStatement(),
+							ReturnStatement(
+								ObjectCreationExpression(
+									GenericName("ClientResult")
+									.AddTypeArgumentListArguments(
+										GenericName("Result")
+										.AddTypeArgumentListArguments(
+											ParseTypeName(t.Name)
+										)
+									)
+								).AddArgumentListArguments()
+								.WithInitializer(
+									InitializerExpression(SyntaxKind.ObjectInitializerExpression)
+									.AddExpressions(
+										AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+											"Success".ToIN(),
+											true.ToLiteral()
+										),
+										AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+											"Data".ToIN(),
+											InvocationExpression(
+												ObjectCreationExpression(
+													GenericName("Result")
+													.AddTypeArgumentListArguments(
+														t.GetTypeSyntax()
+													)
+												)
+												.WithInitializer(
+													InitializerExpression(SyntaxKind.ObjectInitializerExpression)
+													.AddExpressions(
+														AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+															"Success".ToIN(),
+															false.ToLiteral()
+														)
+													)
+												)
+												.MemberAccess("AddError")
+											)
+											.AddArgumentListArguments(
+												"Device with that id already exists".ToArgument()
+											)
+										)
+									)
+								)
+							)
+						)
+					)
+					.AddParameterListParameters(
+						Parameter(Identifier(controller)),
+						Parameter(Identifier(@params))
+					)
+				).ToStatement()
+			);
+
+			blocks = blocks.AddStatements(
+				AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					result.ToIN(),
+					AwaitExpression(
+						InvocationExpression(
+							sc.MemberAccess(propertyName, "DeleteAsync")
+						).AddArgumentListArguments(
+							Argument(var1.ToIN())
+						)
+					)
+				).ToStatement(),
+				TestBuilder.False(result.MemberAccess("Success")).ToStatement(),
+				TestBuilder.NotNull(result.MemberAccess("Errors")).ToStatement(),
+				TestBuilder.Equal(1.ToLiteral(), result.MemberAccess("Errors", "Count")).ToStatement(),
+				TestBuilder.Equal("Device with that id already exists".ToLiteral(), result.MemberAccess("Errors").ElementAccess(0)).ToStatement()
+			);
+
+			blocks = blocks.AddStatements(
+				AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					mClient.MemberAccess("DeleteMethod"),
+					ParenthesizedLambdaExpression(
+						Block(
+							TestBuilder.Equal(t.Name.ToLiteral(), controller.ToIN()).ToStatement(),
+							TestBuilder.Equal(1.ToLiteral(), @params.MemberAccess("Length")).ToStatement(),
+							TestBuilder.Equal(keyvalue, @params.ElementAccess(0)).ToStatement(),
+							ReturnStatement(
+								ObjectCreationExpression(
+									GenericName("ClientResult")
+									.AddTypeArgumentListArguments(
+										GenericName("Result")
+										.AddTypeArgumentListArguments(
+											ParseTypeName(t.Name)
+										)
+									)
+								).AddArgumentListArguments()
+								.WithInitializer(
+									InitializerExpression(SyntaxKind.ObjectInitializerExpression)
+									.AddExpressions(
+										AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+											"Success".ToIN(),
+											true.ToLiteral()
+										),
+										AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+											"Data".ToIN(),
+											ObjectCreationExpression(
+												GenericName("Result")
+												.AddTypeArgumentListArguments(
+													t.GetTypeSyntax()
+												)
+											).WithInitializer(
+												InitializerExpression(SyntaxKind.ObjectInitializerExpression)
+												.AddExpressions(
+													AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+														"Success".ToIN(),
+														true.ToLiteral()
+													),
+													AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+														"Data".ToIN(),
+														CastExpression(t.GetTypeSyntax(), var1.ToIN())
+													)
+												)
+											)
+										)
+									)
+								)
+							)
+						)
+					)
+					.AddParameterListParameters(
+						Parameter(Identifier(controller)),
+						Parameter(Identifier(@params))
+					)
+				).ToStatement()
+			);
+
+			var actual = "actual";
+
+			blocks = blocks.AddStatements(
+				AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					result.ToIN(),
+					AwaitExpression(
+						InvocationExpression(
+							sc.MemberAccess(propertyName, "DeleteAsync")
+						)
+						.AddArgumentListArguments(
+							Argument(var1.ToIN())
+						)
+					)
+				).ToStatement(),
+				TestBuilder.True(result.MemberAccess("Success")).ToStatement(),
+				TestBuilder.NotNull(result.MemberAccess("Data")).ToStatement(),
+				LocalDeclarationStatement(
+					Extensions.VariableDeclaration(
+						actual,
+						EqualsValueClause(
+							result.MemberAccess("Data")
+						)
+					)
+				)
+			);
+
+			foreach (var p in pi)
+			{
+				if (!p.ShouldIgnore())
+				{
+					blocks = blocks.AddStatements(
+						TestBuilder.Equal(var1.MemberAccess(p.Name), actual.MemberAccess(p.Name)).ToStatement()
+					);
+				}
+			}
+			/*					
+
+					result = await sc.Devices.DeleteAsync(device);
+					Assert.True(result.Success);
+					Assert.NotNull(result.Data);
+					var actual = result.Data;
+					Assert.Equal(device.Id, actual.Id);
+					Assert.Equal(device.Name, actual.Name);
+					Assert.Equal(device.Description, actual.Description);
+					Assert.Equal(device.DisplayOrder, actual.DisplayOrder);
+					Assert.Equal(device.DateCreated, actual.DateCreated);
+					Assert.Equal(device.IsReadOnly, actual.IsReadOnly);
+
+
+*/
+
+			method = method.WithBody(Block(
+				UsingStatement(
+					Block(
+					UsingStatement(
+						blocks
+					).WithDeclaration(
+						Extensions.VariableDeclaration(sc,
+							EqualsValueClause(ObjectCreationExpression(ParseTypeName("ServerContext")).AddArgumentListArguments(Argument(IdentifierName(mClient)))
+						)
+					)))
+				).WithDeclaration(
+					Extensions.VariableDeclaration(mClient,
+						EqualsValueClause(ObjectCreationExpression(ParseTypeName("MockHttpClient")).AddArgumentListArguments())
+					)
+				)
+				));
+
+			return method;
+		}
 
 
 		protected override CompilationUnitSyntax internalGenerate(string propertyName, Type t)
@@ -1552,6 +1903,11 @@ namespace Sannel.House.Generator.Generators
 			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Put))
 			{
 				@class = @class.AddMembers(generatePutTest(propertyName, t));
+			}
+
+			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Delete))
+			{
+				@class = @class.AddMembers(generateDeleteTest(propertyName, t));
 			}
 
 			return unit.AddMembers(NamespaceDeclaration(IdentifierName("Sannel.House.ServerSDK.Tests.Context")).AddMembers(@class));
