@@ -183,5 +183,15 @@ namespace Sannel.House.Generator.Common
 		{
 			return Attribute(IdentifierName("TestMethod"));
 		}
+
+		public ExpressionSyntax ThrowsAsync(TypeSyntax type, ExpressionSyntax expression)
+		{
+			throw new NotImplementedException();
+		}
+
+		public ExpressionSyntax ThrowsAsync<T>(ExpressionSyntax expression)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

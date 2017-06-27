@@ -29,5 +29,8 @@ namespace Sannel.House.Generator.Interfaces
 		ExpressionSyntax True(ExpressionSyntax expression, string message);
 		ExpressionSyntax False(ExpressionSyntax expression);
 		ExpressionSyntax False(ExpressionSyntax expression, string message);
+
+		ExpressionSyntax ThrowsAsync(TypeSyntax type, ExpressionSyntax expression);
+		ExpressionSyntax ThrowsAsync<T>(ExpressionSyntax expression);
     }
 }

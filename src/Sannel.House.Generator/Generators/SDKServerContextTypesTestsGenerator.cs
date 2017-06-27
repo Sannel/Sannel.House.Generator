@@ -795,6 +795,103 @@ namespace Sannel.House.Generator.Generators
 		}
 
 
+		private MethodDeclarationSyntax generatePostTest(string propertyName, Type t)
+		{
+			var method = MethodDeclaration(ParseTypeName("Task"), "PostTests")
+							.AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.AsyncKeyword))
+							.AddAttributeLists(AttributeList().AddAttributes(TestBuilder.GetMethodAttribute()));
+
+			var mClient = "mClient";
+			var sc = "sc";
+			var result = "result";
+			var pi = t.GetProperties();
+			var key = pi.GetKeyProperty();
+			var keyst = key.GetTypeSyntax();
+			var keyId = "keyid";
+			var keyvalue = IdentifierName(keyId);
+			var var1 = "var1";
+
+			var blocks = Block(
+				LocalDeclarationStatement(
+					Extensions.VariableDeclaration(var1,
+						EqualsValueClause(LiteralExpression(SyntaxKind.NullLiteralExpression)), 
+						t.Name
+					)
+				),
+				LocalDeclarationStatement(
+					VariableDeclaration(GenericName("Result").AddTypeArgumentListArguments(ParseTypeName(t.Name)))
+					.WithVariables(new SeparatedSyntaxList<VariableDeclaratorSyntax>()
+					.Add(						
+						VariableDeclarator(result)
+						.WithInitializer(EqualsValueClause(LiteralExpression(SyntaxKind.NullLiteralExpression)))
+					))
+				)
+			);
+
+			blocks = blocks.AddStatements(
+				AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+					IdentifierName(result),
+					AwaitExpression(
+						InvocationExpression(
+							sc.MemberAccess(propertyName, "PostAsync")
+						).AddArgumentListArguments(
+							Argument(IdentifierName(var1))
+						)
+					)
+				).ToStatement(),
+				TestBuilder.False(result.MemberAccess("Success")).ToStatement(),
+				TestBuilder.NotNull(result.MemberAccess("Errors", "Count")).ToStatement(),
+				TestBuilder.Equal("Errors".MemberAccess("ServerContext_PleaseLogin"), result.MemberAccess("Errors").ElementAccess(0)).ToStatement(),
+				AwaitExpression(
+					InvocationExpression(
+						sc.MemberAccess("FakeLoginAsync")
+					).AddArgumentListArguments(
+						Argument(IdentifierName(mClient))
+					)
+				).ToStatement()
+			);
+
+
+			blocks = blocks.AddStatements(
+				AwaitExpression(
+					TestBuilder.ThrowsAsync<ArgumentNullException>(
+						ParenthesizedLambdaExpression(
+							InvocationExpression(sc.MemberAccess(propertyName, "PostAsync"))
+							.AddArgumentListArguments(
+								Argument(IdentifierName(var1))
+							)
+						)
+					)
+				).ToStatement()
+			);
+
+			/*					
+								await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+					{
+						result = await sc.Devices.PostAsync(device);
+					});
+
+*/
+
+			method = method.WithBody(Block(
+				UsingStatement(
+					Block(
+					UsingStatement(
+						blocks
+					).WithDeclaration(
+						Extensions.VariableDeclaration(sc,
+							EqualsValueClause(ObjectCreationExpression(ParseTypeName("ServerContext")).AddArgumentListArguments(Argument(IdentifierName(mClient)))
+						)
+					)))
+				).WithDeclaration(
+					Extensions.VariableDeclaration(mClient,
+						EqualsValueClause(ObjectCreationExpression(ParseTypeName("MockHttpClient")).AddArgumentListArguments())
+					)
+				)
+				));
+
+			return method;
+		}
 
 		protected override CompilationUnitSyntax internalGenerate(string propertyName, Type t)
 		{
@@ -833,6 +930,7 @@ namespace Sannel.House.Generator.Generators
 			}
 			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Post))
 			{
+				@class = @class.AddMembers(generatePostTest(propertyName, t));
 				/*@class = @class.AddMembers(generatePostTest(controllerName, propertyName, t));
 				@class = @class.AddMembers(SF.MethodDeclaration(SF.ParseTypeName("void"),
 					"postPreCall")

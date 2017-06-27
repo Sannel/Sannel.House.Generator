@@ -140,5 +140,36 @@ namespace Sannel.House.Generator.Common
 		{
 			return Attribute(IdentifierName("Fact"));
 		}
+
+		public ExpressionSyntax ThrowsAsync(TypeSyntax type, ExpressionSyntax expression)
+		{
+			return InvocationExpression(
+					MemberAccessExpression(Microsoft.CodeAnalysis.CSharp.SyntaxKind.SimpleMemberAccessExpression,
+						IdentifierName("Assert"),
+						GenericName("ThrowsAsync")
+						.AddTypeArgumentListArguments(
+							type
+						)
+					)
+				).AddArgumentListArguments(
+					Argument(expression)
+				);
+		}
+
+		public ExpressionSyntax ThrowsAsync<T>(ExpressionSyntax expression)
+		{
+			var type = typeof(T);
+			return InvocationExpression(
+					MemberAccessExpression(Microsoft.CodeAnalysis.CSharp.SyntaxKind.SimpleMemberAccessExpression,
+						IdentifierName("Assert"),
+						GenericName("ThrowsAsync")
+						.AddTypeArgumentListArguments(
+							type.GetTypeSyntax()
+						)
+					)
+				).AddArgumentListArguments(
+					Argument(expression)
+				);
+		}
 	}
 }
