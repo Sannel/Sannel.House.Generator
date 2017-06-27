@@ -16,7 +16,7 @@ namespace Sannel.House.Generator
 {
 	public static class Extensions
 	{
-		public static StatementSyntax GenerateRandomObject(this Type t, string variableName, Random rand, ExpressionSyntax keyValue=null)
+		public static StatementSyntax GenerateRandomObject(this Type t, string variableName, Random rand, ExpressionSyntax keyValue=null, bool shouldDeclare=true)
 		{
 			var pi = t.GetProperties();
 			var key = pi.GetKeyProperty();
@@ -43,17 +43,36 @@ namespace Sannel.House.Generator
 				}
 			}
 
-			return SF.LocalDeclarationStatement(
-				VariableDeclaration(variableName,
-					SF.EqualsValueClause(
+			if (shouldDeclare)
+			{
+				return SF.LocalDeclarationStatement(
+					VariableDeclaration(variableName,
+						SF.EqualsValueClause(
+							SF.ObjectCreationExpression(SF.ParseTypeName(t.Name))
+							.AddArgumentListArguments()
+							.WithInitializer(
+								SF.InitializerExpression(SyntaxKind.ObjectInitializerExpression, list)
+							)
+						)
+					)
+				);
+			}
+			else
+			{
+				return SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+						variableName.ToIN(),
 						SF.ObjectCreationExpression(SF.ParseTypeName(t.Name))
 						.AddArgumentListArguments()
 						.WithInitializer(
 							SF.InitializerExpression(SyntaxKind.ObjectInitializerExpression, list)
 						)
-					)
-				)
-			);
+					).ToStatement();
+			}
+		}
+
+		public static ExpressionSyntax ToIN(this string identifier)
+		{
+			return SF.IdentifierName(identifier);
 		}
 
 		public static ElementAccessExpressionSyntax ElementAccess(this string name, int index)
