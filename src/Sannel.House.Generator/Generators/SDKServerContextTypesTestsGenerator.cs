@@ -812,7 +812,6 @@ namespace Sannel.House.Generator.Generators
 			var var1 = "var1";
 			var controller = "controller";
 			var model = "model";
-			var formData = "formData";
 			var rand = new Random();
 
 			var blocks = Block(
@@ -887,8 +886,6 @@ namespace Sannel.House.Generator.Generators
 						Block(
 							TestBuilder.Equal(t.Name.ToLiteral(), controller.ToIN()).ToStatement(),
 							TestBuilder.Equal(var1.ToIN(), model.ToIN()).ToStatement(),
-							TestBuilder.NotNull(formData.ToIN()).ToStatement(),
-							TestBuilder.Equal(0.ToLiteral(), formData.MemberAccess("Length")).ToStatement(),
 							ReturnStatement(
 								InvocationExpression(
 									ObjectCreationExpression(
@@ -917,8 +914,7 @@ namespace Sannel.House.Generator.Generators
 					)
 					.AddParameterListParameters(
 						Parameter(Identifier(controller)),
-						Parameter(Identifier(model)),
-						Parameter(Identifier(formData))
+						Parameter(Identifier(model))
 					)
 				).ToStatement()
 			);
@@ -949,8 +945,6 @@ namespace Sannel.House.Generator.Generators
 						Block(
 							TestBuilder.Equal(t.Name.ToLiteral(), controller.ToIN()).ToStatement(),
 							TestBuilder.Equal(var1.ToIN(), model.ToIN()).ToStatement(),
-							TestBuilder.NotNull(formData.ToIN()).ToStatement(),
-							TestBuilder.Equal(0.ToLiteral(), formData.MemberAccess("Length")).ToStatement(),
 							ReturnStatement(
 								ObjectCreationExpression(
 									GenericName("ClientResult")
@@ -999,8 +993,7 @@ namespace Sannel.House.Generator.Generators
 					)
 					.AddParameterListParameters(
 						Parameter(Identifier(controller)),
-						Parameter(Identifier(model)),
-						Parameter(Identifier(formData))
+						Parameter(Identifier(model))
 					)
 				).ToStatement()
 			);
@@ -1029,8 +1022,6 @@ namespace Sannel.House.Generator.Generators
 						Block(
 							TestBuilder.Equal(t.Name.ToLiteral(), controller.ToIN()).ToStatement(),
 							TestBuilder.Equal(var1.ToIN(), model.ToIN()).ToStatement(),
-							TestBuilder.NotNull(formData.ToIN()).ToStatement(),
-							TestBuilder.Equal(0.ToLiteral(), formData.MemberAccess("Length")).ToStatement(),
 							ReturnStatement(
 								ObjectCreationExpression(
 									GenericName("ClientResult")
@@ -1076,8 +1067,7 @@ namespace Sannel.House.Generator.Generators
 					)
 					.AddParameterListParameters(
 						Parameter(Identifier(controller)),
-						Parameter(Identifier(model)),
-						Parameter(Identifier(formData))
+						Parameter(Identifier(model))
 					)
 				).ToStatement()
 			);
@@ -1170,7 +1160,6 @@ namespace Sannel.House.Generator.Generators
 			var var1 = "var1";
 			var controller = "controller";
 			var model = "model";
-			var formData = "formData";
 			var rand = new Random();
 
 			var blocks = Block(
@@ -1244,8 +1233,6 @@ namespace Sannel.House.Generator.Generators
 						Block(
 							TestBuilder.Equal(t.Name.ToLiteral(), controller.ToIN()).ToStatement(),
 							TestBuilder.Equal(var1.ToIN(), model.ToIN()).ToStatement(),
-							TestBuilder.NotNull(formData.ToIN()).ToStatement(),
-							TestBuilder.Equal(0.ToLiteral(), formData.MemberAccess("Length")).ToStatement(),
 							ReturnStatement(
 								InvocationExpression(
 									ObjectCreationExpression(
@@ -1274,8 +1261,7 @@ namespace Sannel.House.Generator.Generators
 					)
 					.AddParameterListParameters(
 						Parameter(Identifier(controller)),
-						Parameter(Identifier(model)),
-						Parameter(Identifier(formData))
+						Parameter(Identifier(model))
 					)
 				).ToStatement()
 			);
@@ -1306,8 +1292,6 @@ namespace Sannel.House.Generator.Generators
 						Block(
 							TestBuilder.Equal(t.Name.ToLiteral(), controller.ToIN()).ToStatement(),
 							TestBuilder.Equal(var1.ToIN(), model.ToIN()).ToStatement(),
-							TestBuilder.NotNull(formData.ToIN()).ToStatement(),
-							TestBuilder.Equal(0.ToLiteral(), formData.MemberAccess("Length")).ToStatement(),
 							ReturnStatement(
 								ObjectCreationExpression(
 									GenericName("ClientResult")
@@ -1356,8 +1340,7 @@ namespace Sannel.House.Generator.Generators
 					)
 					.AddParameterListParameters(
 						Parameter(Identifier(controller)),
-						Parameter(Identifier(model)),
-						Parameter(Identifier(formData))
+						Parameter(Identifier(model))
 					)
 				).ToStatement()
 			);
@@ -1386,8 +1369,6 @@ namespace Sannel.House.Generator.Generators
 						Block(
 							TestBuilder.Equal(t.Name.ToLiteral(), controller.ToIN()).ToStatement(),
 							TestBuilder.Equal(var1.ToIN(), model.ToIN()).ToStatement(),
-							TestBuilder.NotNull(formData.ToIN()).ToStatement(),
-							TestBuilder.Equal(0.ToLiteral(), formData.MemberAccess("Length")).ToStatement(),
 							ReturnStatement(
 								ObjectCreationExpression(
 									GenericName("ClientResult")
@@ -1433,8 +1414,7 @@ namespace Sannel.House.Generator.Generators
 					)
 					.AddParameterListParameters(
 						Parameter(Identifier(controller)),
-						Parameter(Identifier(model)),
-						Parameter(Identifier(formData))
+						Parameter(Identifier(model))
 					)
 				).ToStatement()
 			);

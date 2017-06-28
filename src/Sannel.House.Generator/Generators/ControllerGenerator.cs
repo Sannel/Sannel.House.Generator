@@ -218,6 +218,12 @@ namespace Sannel.House.Generator.Generators
 							SF.IdentifierName("page")
 						)
 					),
+					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+						results.Text.MemberAccess("Count"),
+						SF.InvocationExpression(
+							query.Text.MemberAccess("Count")
+						).AddArgumentListArguments()
+					).ToStatement(),
 					SF.ExpressionStatement(
 						SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 							results.Text.MemberAccess("Data"),
