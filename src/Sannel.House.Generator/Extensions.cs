@@ -181,7 +181,7 @@ namespace Sannel.House.Generator
 				throw new ArgumentNullException(nameof(info));
 			}
 
-			Type t = info.PropertyType;
+			var t = info.PropertyType;
 
 			return t.GetTypeSyntax();
 		}
@@ -192,10 +192,22 @@ namespace Sannel.House.Generator
 			{
 				if (string.Compare(t.Name, "Nullable`1") == 0)
 				{
-					return SF.ParseTypeName($"{t.GenericTypeArguments.First().Name}?");
+					var first = t.GenericTypeArguments.First();
+					if (typeof(Enum).IsAssignableFrom(first))
+					{
+						return SF.ParseTypeName($"{first.FullName}?");
+					}
+					else
+					{
+						return SF.ParseTypeName($"{first.Name}?");
+					}
 				}
 
 				throw new Exception($"Type {t.FullName} is not supported right now.");
+			}
+			else if (typeof(Enum).IsAssignableFrom(t))
+			{
+				return SF.ParseTypeName(t.FullName);
 			}
 			else
 			{

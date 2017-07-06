@@ -95,6 +95,7 @@ namespace Sannel.House.Generator.Generators
 			unit = unit.AddUsing("System").WithLeadingTrivia(new SyntaxTriviaList().Add(GeneratorBase.GetLicenseComment()));
 			unit = unit.AddUsing("System.Threading.Tasks");
 			unit = unit.AddUsing("Newtonsoft.Json.Linq");
+			unit = unit.AddUsing("Sannel.House.ServerSDK.Context");
 			unit = unit.AddUsings(config.HttpBuilder.Namespace);
 
 			var names = NamespaceDeclaration(IdentifierName("Sannel.House.ServerSDK"));
