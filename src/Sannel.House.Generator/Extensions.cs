@@ -25,7 +25,7 @@ namespace Sannel.House.Generator
 			var list = SF.SeparatedList<ExpressionSyntax>().Add(
 					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 						SF.IdentifierName(key.Name),
-						keyValue ?? keyST.GetRandomValue(rand)
+						keyValue ?? keyST.GetRandomValue(rand, key.PropertyType)
 					)
 				);
 
@@ -37,7 +37,7 @@ namespace Sannel.House.Generator
 					list = list.Add(
 						SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 							SF.IdentifierName(p.Name),
-							st.GetRandomValue(rand)
+							st.GetRandomValue(rand, p.PropertyType)
 						)
 					);
 				}
@@ -234,7 +234,7 @@ namespace Sannel.House.Generator
 			return syntax.AddArguments(SF.Argument(SF.IdentifierName(name)));
 		}
 
-		public static ExpressionSyntax GetRandomValue(this TypeSyntax t, Random rand)
+		public static ExpressionSyntax GetRandomValue(this TypeSyntax t, Random rand, Type actualType)
 		{
 			var type = t.ToString();
 			if (t is NullableTypeSyntax nt)
@@ -311,6 +311,13 @@ namespace Sannel.House.Generator
 						);
 
 				default:
+					if (typeof(Enum).IsAssignableFrom(actualType))
+					{
+						var values = Enum.GetNames(actualType);
+						var selectedValue = rand.Next(0, values.Length - 1);
+
+						return actualType.FullName.MemberAccess(values[selectedValue]);
+					}
 					return $"{type} is not suppored please add support or change its type".ToLiteral();
 
 			}
@@ -378,7 +385,10 @@ namespace Sannel.House.Generator
 			}
 
 
-			return SF.LiteralExpression(SyntaxKind.NullLiteralExpression);
+			return SF.InvocationExpression(SF.IdentifierName("default"))
+				.AddArgumentListArguments(
+					SF.Argument(SF.IdentifierName(type))
+				);
 		}
 
 		public static ExpressionSyntax LiteralForObject(this object obj)

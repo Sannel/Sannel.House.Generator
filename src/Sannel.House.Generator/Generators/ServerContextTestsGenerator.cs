@@ -314,7 +314,7 @@ namespace Sannel.House.Generator.Generators
 				).WithLeadingTrivia(Comment("// Server ")),
 				LocalDeclarationStatement(
 					Extensions.VariableDeclaration(key.Text,
-						EqualsValueClause(keySy.GetRandomValue(rand))
+						EqualsValueClause(keySy.GetRandomValue(rand, k.PropertyType))
 						, keySy.GetTypeString()
 					)
 				),
@@ -476,7 +476,7 @@ namespace Sannel.House.Generator.Generators
 				ExpressionStatement(
 					AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 						IdentifierName(key),
-						keySy.GetRandomValue(rand)
+						keySy.GetRandomValue(rand, k.PropertyType)
 					)
 				).WithLeadingTrivia(Comment("// Unable to connect to server")),
 				ExpressionStatement(
@@ -584,7 +584,7 @@ namespace Sannel.House.Generator.Generators
 						IdentifierName("Exception"))
 			));
 
-			if (String.Compare(variables.GetValue("IsUWP"), "1", true) == 0)
+			if (string.Compare(variables.GetValue("IsUWP"), "1", true) == 0)
 			{
 				method = method.AddBodyStatements(
 					ExpressionStatement(
@@ -866,7 +866,7 @@ namespace Sannel.House.Generator.Generators
 							.AddArgumentListArguments(
 								Argument(
 									ParenthesizedLambdaExpression(
-										(prop.IsKey()) ? IdentifierName(key) : prop.GetTypeSyntax().GetRandomValue(rand)
+										(prop.IsKey()) ? IdentifierName(key) : prop.GetTypeSyntax().GetRandomValue(rand, prop.PropertyType)
 									)
 								)
 							)

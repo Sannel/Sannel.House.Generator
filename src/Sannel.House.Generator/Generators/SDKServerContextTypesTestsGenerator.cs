@@ -478,7 +478,7 @@ namespace Sannel.House.Generator.Generators
 					LocalDeclarationStatement(
 						Extensions.VariableDeclaration(keyId,
 							EqualsValueClause(
-								CastExpression(keyst, keyst.GetRandomValue(rand)) // ensure this is the correct type
+								CastExpression(keyst, keyst.GetRandomValue(rand, key.PropertyType)) // ensure this is the correct type
 							)
 						)
 					),
@@ -818,7 +818,7 @@ namespace Sannel.House.Generator.Generators
 				LocalDeclarationStatement(
 					Extensions.VariableDeclaration(
 						keyId,
-						EqualsValueClause(keyst.GetRandomValue(rand)),
+						EqualsValueClause(keyst.GetRandomValue(rand, key.PropertyType)),
 						key.PropertyType.Name
 					)
 				),
@@ -1166,7 +1166,7 @@ namespace Sannel.House.Generator.Generators
 				LocalDeclarationStatement(
 					Extensions.VariableDeclaration(
 						keyId,
-						EqualsValueClause(keyst.GetRandomValue(rand))
+						EqualsValueClause(keyst.GetRandomValue(rand, key.PropertyType))
 					)
 				),
 				LocalDeclarationStatement(
@@ -1512,7 +1512,7 @@ namespace Sannel.House.Generator.Generators
 				LocalDeclarationStatement(
 					Extensions.VariableDeclaration(
 						keyId,
-						EqualsValueClause(keyst.GetRandomValue(rand)),
+						EqualsValueClause(keyst.GetRandomValue(rand, key.PropertyType)),
 						key.PropertyType.Name
 					)
 				),
