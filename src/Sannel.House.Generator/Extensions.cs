@@ -122,27 +122,27 @@ namespace Sannel.House.Generator
 				return null;
 			}
 
-			var dm = props.FirstOrDefault(i => String.Compare(i.Name, "DisplayOrder", true) == 0);
+			var dm = props.FirstOrDefault(i => string.Compare(i.Name, "DisplayOrder", true) == 0);
 			if (dm == null)
 			{
-				dm = props.FirstOrDefault(i => String.Compare(i.Name, "Order", true) == 0);
+				dm = props.FirstOrDefault(i => string.Compare(i.Name, "Order", true) == 0);
 			}
 
 			if (dm == null)
 			{
-				dm = props.FirstOrDefault(i => String.Compare(i.Name, "DateCreated") == 0);
+				dm = props.FirstOrDefault(i => string.Compare(i.Name, "DateCreated") == 0);
 				isForward = false;
 			}
 
 			if (dm == null)
 			{
-				dm = props.FirstOrDefault(i => String.Compare(i.Name, "CreatedDate") == 0);
+				dm = props.FirstOrDefault(i => string.Compare(i.Name, "CreatedDate") == 0);
 				isForward = false;
 			}
 
 			if (dm == null)
 			{
-				dm = props.FirstOrDefault(i => String.Compare(i.Name, "CreatedDateTime") == 0);
+				dm = props.FirstOrDefault(i => string.Compare(i.Name, "CreatedDateTime") == 0);
 				isForward = false;
 			}
 
@@ -190,7 +190,7 @@ namespace Sannel.House.Generator
 		{
 			if (t.GenericTypeArguments != null && t.GenericTypeArguments.Length > 0)
 			{
-				if (String.Compare(t.Name, "Nullable`1") == 0)
+				if (string.Compare(t.Name, "Nullable`1") == 0)
 				{
 					return SF.ParseTypeName($"{t.GenericTypeArguments.First().Name}?");
 				}
@@ -203,12 +203,12 @@ namespace Sannel.House.Generator
 			}
 		}
 
-		public static CompilationUnitSyntax AddUsing(this CompilationUnitSyntax unit, String namesp)
+		public static CompilationUnitSyntax AddUsing(this CompilationUnitSyntax unit, string namesp)
 		{
 			return unit.AddUsings(SF.UsingDirective(SF.IdentifierName(namesp)));
 		}
 
-		public static CompilationUnitSyntax AddUsings(this CompilationUnitSyntax unit, params String[] usings)
+		public static CompilationUnitSyntax AddUsings(this CompilationUnitSyntax unit, params string[] usings)
 		{
 			foreach (var u in usings)
 			{
@@ -217,7 +217,7 @@ namespace Sannel.House.Generator
 			return unit;
 		}
 
-		public static ArgumentListSyntax AddArgument(this ArgumentListSyntax syntax, String name)
+		public static ArgumentListSyntax AddArgument(this ArgumentListSyntax syntax, string name)
 		{
 			return syntax.AddArguments(SF.Argument(SF.IdentifierName(name)));
 		}
@@ -305,15 +305,14 @@ namespace Sannel.House.Generator
 
 		}
 
-		public static String GetTypeString(this TypeSyntax t)
+		public static string GetTypeString(this TypeSyntax t)
 		{
 			if (t == null)
 			{
 				return null;
 			}
-			if (t is NullableTypeSyntax)
+			if (t is NullableTypeSyntax nt)
 			{
-				var nt = (NullableTypeSyntax)t;
 				return $"{nt.ElementType}?";
 			}
 
@@ -322,10 +321,9 @@ namespace Sannel.House.Generator
 
 		public static ExpressionSyntax GetDefaultValue(this TypeSyntax t)
 		{
-			String type = t.ToString();
-			if (t is NullableTypeSyntax)
+			var type = t.ToString();
+			if (t is NullableTypeSyntax nt)
 			{
-				var nt = (NullableTypeSyntax)t;
 				type = nt.ElementType.ToString();
 			}
 			switch (type)
@@ -371,7 +369,7 @@ namespace Sannel.House.Generator
 			return SF.LiteralExpression(SyntaxKind.NullLiteralExpression);
 		}
 
-		public static ExpressionSyntax LiteralForObject(this Object obj)
+		public static ExpressionSyntax LiteralForObject(this object obj)
 		{
 			if(obj != null)
 			{
@@ -380,30 +378,30 @@ namespace Sannel.House.Generator
 				{
 					return ((bool)obj).ToLiteral();
 				}
-				if(type == typeof(Int32))
+				if(type == typeof(int))
 				{
-					return ((Int32)obj).ToLiteral();
+					return ((int)obj).ToLiteral();
 				}
 				if(type == typeof(double))
 				{
 					return ((double)obj).ToLiteral();
 				}
-				if(type == typeof(String))
+				if(type == typeof(string))
 				{
-					return ((String)obj).ToLiteral();
+					return ((string)obj).ToLiteral();
 				}
 
 			}
 			return SF.LiteralExpression(SyntaxKind.NullLiteralExpression);
 		}
 
-		public static ExpressionSyntax LiteralForProperty(this Random rand, Type t, String name)
+		public static ExpressionSyntax LiteralForProperty(this Random rand, Type t, string name)
 		{
 			if (t == typeof(bool))
 			{
 				return (rand.Next(1, 10) >= 5) ? SF.LiteralExpression(SyntaxKind.TrueLiteralExpression) : SF.LiteralExpression(SyntaxKind.FalseLiteralExpression);
 			}
-			if (t == typeof(String))
+			if (t == typeof(string))
 			{
 				return SF.LiteralExpression(SyntaxKind.StringLiteralExpression, SF.Literal(rand.NextString(10, 50)));
 			}
@@ -411,7 +409,7 @@ namespace Sannel.House.Generator
 			{
 				return SF.LiteralExpression(SyntaxKind.NumericLiteralExpression, SF.Literal(rand.Next(1, 100)));
 			}
-			if (t == typeof(float) || t == typeof(double) || t == typeof(decimal))
+			if (t == typeof(float) || t == typeof(double) || t == typeof(double?) || t == typeof(decimal))
 			{
 				return SF.LiteralExpression(SyntaxKind.NumericLiteralExpression, SF.Literal(rand.NextDouble()));
 			}
@@ -426,10 +424,10 @@ namespace Sannel.House.Generator
 
 			if (t == typeof(DateTime) || t == typeof(DateTime?))
 			{
-				if (String.Compare(name, "CreatedDate", true) == 0 ||
-					String.Compare(name, "CreatedDateTime", true) == 0 ||
-					String.Compare(name, "ModifiedDate", true) == 0 ||
-					String.Compare(name, "ModifiedDateTime", true) == 0)
+				if (string.Compare(name, "CreatedDate", true) == 0 ||
+					string.Compare(name, "CreatedDateTime", true) == 0 ||
+					string.Compare(name, "ModifiedDate", true) == 0 ||
+					string.Compare(name, "ModifiedDateTime", true) == 0)
 				{
 					return SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
 						SF.IdentifierName("DateTime"),
@@ -441,10 +439,10 @@ namespace Sannel.House.Generator
 			}
 			if (t == typeof(DateTimeOffset) || t == typeof(DateTimeOffset?))
 			{
-				if (String.Compare(name, "CreatedDate", true) == 0 ||
-					String.Compare(name, "CreatedDateTime", true) == 0 ||
-					String.Compare(name, "ModifiedDate", true) == 0 ||
-					String.Compare(name, "ModifiedDateTime", true) == 0)
+				if (string.Compare(name, "CreatedDate", true) == 0 ||
+					string.Compare(name, "CreatedDateTime", true) == 0 ||
+					string.Compare(name, "ModifiedDate", true) == 0 ||
+					string.Compare(name, "ModifiedDateTime", true) == 0)
 				{
 					return SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
 						SF.IdentifierName("DateTimeOffset"),
@@ -462,11 +460,19 @@ namespace Sannel.House.Generator
 					SF.IdentifierName(Enum.GetName(typeof(DayOfWeek), rand.Next(1, 7))));
 			}
 
+			if (typeof(Enum).IsAssignableFrom(t))
+			{
+				var values = Enum.GetNames(t);
+				var selectedValue = rand.Next(0, values.Length - 1);
+
+				return t.FullName.MemberAccess(values[selectedValue]);
+			}
+
 			throw new Exception($"Unsupported type {t.Name}");
 
 		}
 
-		public static VariableDeclarationSyntax VariableDeclaration(String name, String createType, ArgumentListSyntax list, String declareType = "var")
+		public static VariableDeclarationSyntax VariableDeclaration(string name, string createType, ArgumentListSyntax list, string declareType = "var")
 		{
 			return SF.VariableDeclaration(SF.IdentifierName(declareType))
 				.AddVariables(SF.VariableDeclarator(name)
@@ -475,7 +481,7 @@ namespace Sannel.House.Generator
 						.WithArgumentList(list)
 						)));
 		}
-		public static VariableDeclarationSyntax VariableDeclaration(String name, EqualsValueClauseSyntax equals, String declareType = "var")
+		public static VariableDeclarationSyntax VariableDeclaration(string name, EqualsValueClauseSyntax equals, string declareType = "var")
 		{
 			return SF.VariableDeclaration(SF.IdentifierName(declareType))
 				.AddVariables(SF.VariableDeclarator(name)
@@ -483,7 +489,7 @@ namespace Sannel.House.Generator
 				);
 		}
 
-		public static VariableDeclaratorSyntax VariableDeclarator(String name, String createType, ArgumentListSyntax list, String declareType = "var")
+		public static VariableDeclaratorSyntax VariableDeclarator(string name, string createType, ArgumentListSyntax list, string declareType = "var")
 		{
 			return SF.VariableDeclarator(declareType)
 					.WithInitializer(SF.EqualsValueClause(
@@ -492,7 +498,7 @@ namespace Sannel.House.Generator
 						));
 		}
 
-		public static AssignmentExpressionSyntax SetPropertyValue(IdentifierNameSyntax name, String propertyName, ExpressionSyntax value)
+		public static AssignmentExpressionSyntax SetPropertyValue(IdentifierNameSyntax name, string propertyName, ExpressionSyntax value)
 		{
 			return SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 				SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
@@ -523,12 +529,12 @@ namespace Sannel.House.Generator
 				.AddArgumentListArguments(arguments);
 		}
 
-		public static MemberAccessExpressionSyntax MemberAccess(String name, String property)
+		public static MemberAccessExpressionSyntax MemberAccess(string name, string property)
 		{
 			return MemberAccess(SF.IdentifierName(name), SF.IdentifierName(property));
 		}
 
-		public static MemberAccessExpressionSyntax MemberAccess(this String left, String right, params String[] moreRight)
+		public static MemberAccessExpressionSyntax MemberAccess(this string left, string right, params string[] moreRight)
 		{
 			return SF.IdentifierName(left).MemberAccess(SF.IdentifierName(right),
 				moreRight?.Select(i => SF.IdentifierName(i))?.ToArray()
@@ -581,7 +587,7 @@ namespace Sannel.House.Generator
 			return att != null && att.AlwaysValue != null;
 		}
 
-		public static Object GetAlwaysValue(this PropertyInfo pi)
+		public static object GetAlwaysValue(this PropertyInfo pi)
 		{
 			var att = pi.GetCustomAttribute<GenerationAttribute>();
 			if(att != null)
@@ -664,12 +670,12 @@ namespace Sannel.House.Generator
 			return SF.LiteralExpression(SyntaxKind.NumericLiteralExpression, SF.Literal(number));
 		}
 
-		public static ArgumentSyntax ToArgument(this String number)
+		public static ArgumentSyntax ToArgument(this string number)
 		{
 			return SF.Argument(number.ToLiteral());
 		}
 
-		public static LiteralExpressionSyntax ToLiteral(this String value)
+		public static LiteralExpressionSyntax ToLiteral(this string value)
 		{
 			return SF.LiteralExpression(SyntaxKind.StringLiteralExpression, SF.Literal(value));
 		}
@@ -691,8 +697,10 @@ namespace Sannel.House.Generator
 
 		public static InterpolatedStringExpressionSyntax ToInterpolatedString(this StringToken value, params StringToken[] tokens)
 		{
-			List<StringToken> ltokens = new List<StringToken>();
-			ltokens.Add(value);
+			var ltokens = new List<StringToken>
+			{
+				value
+			};
 			if (tokens != null)
 			{
 				ltokens.AddRange(tokens);
@@ -727,7 +735,7 @@ namespace Sannel.House.Generator
 			return ise;
 		}
 
-		public static InterpolatedStringExpressionSyntax ToInterpolatedString(this String value, params StringToken[] tokens)
+		public static InterpolatedStringExpressionSyntax ToInterpolatedString(this string value, params StringToken[] tokens)
 		{
 			return ToInterpolatedString((StringToken)value, tokens);
 		}
