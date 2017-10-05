@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Sannel.House.Generator.Common;
@@ -427,7 +427,7 @@ namespace Sannel.House.Generator
 			{
 				return SF.LiteralExpression(SyntaxKind.StringLiteralExpression, SF.Literal(rand.NextString(10, 50)));
 			}
-			if (t == typeof(int) || t == typeof(short) || t == typeof(long) || t == typeof(int?))
+			if (t == typeof(int) || t == typeof(short) || t == typeof(long) || t == typeof(int?) || t == typeof(long?))
 			{
 				return SF.LiteralExpression(SyntaxKind.NumericLiteralExpression, SF.Literal(rand.Next(1, 100)));
 			}

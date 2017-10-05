@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -21,7 +21,7 @@ namespace Sannel.House.Generator.Generators
 
 		}
 
-		private MethodDeclarationSyntax generateGetMethod(String propertyName, Type t)
+		private MethodDeclarationSyntax generateGetMethod(string propertyName, Type t, GenerationAttribute ga)
 		{
 			var method = SF.MethodDeclaration(SF.GenericName("PagedResults")
 				.AddTypeArgumentListArguments(SF.ParseTypeName(t.Name)), "internalGetPaged")
@@ -33,9 +33,8 @@ namespace Sannel.House.Generator.Generators
 
 			var props = t.GetProperties();
 
-			var forward = true;
 
-			var dm = props.GetSortProperty(out forward);
+			var dm = props.GetSortProperty(out var forward);
 
 			var query = SF.Identifier("query");
 			/*var results = new PagedResults<ApplicationLogEntry>();
@@ -129,15 +128,39 @@ namespace Sannel.House.Generator.Generators
 
 			if (dm != null)
 			{
+				ExpressionSyntax contextQuery = SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
+								SF.IdentifierName(context),
+								SF.IdentifierName(propertyName)
+							);
+				if(ga?.GetIncludes?.Length > 0)
+				{
+					for(var i = 0; i < ga.GetIncludes.Length; i++)
+					{
+						var inc = ga.GetIncludes[i];
+						if(i == 0)
+						{
+							contextQuery = SF.InvocationExpression(
+								Extensions.MemberAccess(contextQuery,
+									(i == 0) ? "Include" : "ThenInclude"
+								)
+							).AddArgumentListArguments(
+								SF.Argument(
+									SF.SimpleLambdaExpression(
+										SF.Parameter(SF.Identifier("i")),
+										"i".MemberAccess(inc)
+									)
+								)
+							);
+						}
+					}
+				}
+
 				blocks = blocks.AddStatements(SF.ExpressionStatement(
 					SF.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
 						SF.IdentifierName(query),
 					SF.InvocationExpression(
 						SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
-							SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
-								SF.IdentifierName(context),
-								SF.IdentifierName(propertyName)
-							),
+							contextQuery,
 							SF.IdentifierName((forward) ? "OrderBy" : "OrderByDescending")))
 						.AddArgumentListArguments(
 							SF.Argument(
@@ -257,7 +280,7 @@ namespace Sannel.House.Generator.Generators
 			return method;
 		}
 
-		private MethodDeclarationSyntax generateGetWithIdMethod(String propertyName, Type t)
+		private MethodDeclarationSyntax generateGetWithIdMethod(string propertyName, Type t)
 		{
 			var props = t.GetProperties();
 
@@ -500,7 +523,7 @@ namespace Sannel.House.Generator.Generators
 				);
 		}
 
-		private MethodDeclarationSyntax generatePostMethod(String propertyName, Type t)
+		private MethodDeclarationSyntax generatePostMethod(string propertyName, Type t)
 		{
 			var props = t.GetProperties();
 			var data = SF.Identifier("data");
@@ -610,7 +633,7 @@ namespace Sannel.House.Generator.Generators
 			ExpressionSyntax defaultValue = keyType.GetDefaultValue();
 			if (key.PropertyType == typeof(Guid))
 			{
-				Random rand = new Random();
+				var rand = new Random();
 				defaultValue = rand.LiteralForProperty(key.PropertyType, key.Name);
 			}
 
@@ -867,7 +890,7 @@ namespace Sannel.House.Generator.Generators
 		}
 
 
-		private MethodDeclarationSyntax generatePutMethod(String propertyName, Type t)
+		private MethodDeclarationSyntax generatePutMethod(string propertyName, Type t)
 		{
 			var props = t.GetProperties();
 			var data = SF.Identifier("data");
@@ -1214,7 +1237,7 @@ namespace Sannel.House.Generator.Generators
 			return method;
 		}
 
-		private MethodDeclarationSyntax generateDeleteMethod(String propertyName, Type t)
+		private MethodDeclarationSyntax generateDeleteMethod(string propertyName, Type t)
 		{
 			var props = t.GetProperties();
 			var keyName = SF.Identifier("key");
@@ -1407,7 +1430,7 @@ namespace Sannel.House.Generator.Generators
 
 			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.Get))
 			{
-				@class = @class.AddMembers(generateGetMethod(propertyName, t));
+				@class = @class.AddMembers(generateGetMethod(propertyName, t, ga));
 			}
 
 			if (ga.ShouldGenerateMethod(GenerationAttribute.ApiCalls.GetWithId))

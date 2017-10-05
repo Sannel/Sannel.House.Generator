@@ -1,30 +1,29 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <VersionPrefix>0.1.0</VersionPrefix>
-    <TargetFramework>netcoreapp1.1</TargetFramework>
-    <DebugType>portable</DebugType>
-    <AssemblyName>Sannel.House.Generator</AssemblyName>
-    <OutputType>Exe</OutputType>
-    <PackageId>Sannel.House.Generator</PackageId>
-    <PackageTargetFallback>$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
-    <RuntimeFrameworkVersion>1.1.1</RuntimeFrameworkVersion>
-  </PropertyGroup>
+	<PropertyGroup>
+		<VersionPrefix>0.2.0</VersionPrefix>
+		<TargetFramework>netcoreapp2.0</TargetFramework>
+		<DebugType>portable</DebugType>
+		<AssemblyName>Sannel.House.Generator</AssemblyName>
+		<OutputType>Exe</OutputType>
+		<PackageId>Sannel.House.Generator</PackageId>
+		<RuntimeFrameworkVersion>2.0.0</RuntimeFrameworkVersion>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="1.1.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.2.0" />
-    <PackageReference Include="Sannel.House" Version="0.2.0-alpha-0003" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="1.1.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.3.2" />
+		<PackageReference Include="Sannel.House" Version="0.4.0-alpha-0001" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Sannel.House.Web\src\Sannel.House.Web.Base\Sannel.House.Web.Base.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Sannel.House.Web\src\Sannel.House.Web.Base\Sannel.House.Web.Base.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Update="GeneratorConfiguration.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Update="GeneratorConfiguration.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 
 </Project>
