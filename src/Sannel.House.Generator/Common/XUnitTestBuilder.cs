@@ -1,4 +1,4 @@
-﻿using Sannel.House.Generator.Interfaces;
+using Sannel.House.Generator.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
