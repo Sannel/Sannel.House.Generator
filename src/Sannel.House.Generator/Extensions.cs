@@ -435,7 +435,7 @@ namespace Sannel.House.Generator
 			{
 				return SF.LiteralExpression(SyntaxKind.NumericLiteralExpression, SF.Literal(rand.NextDouble()));
 			}
-			if (t == typeof(Guid))
+			if (t == typeof(Guid) || t == typeof(Guid?))
 			{
 				return SF.InvocationExpression(
 					SF.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
@@ -488,11 +488,6 @@ namespace Sannel.House.Generator
 				var selectedValue = rand.Next(0, values.Length - 1);
 
 				return t.FullName.MemberAccess(values[selectedValue]);
-			}
-
-			if(t == typeof(Guid?))
-			{
-				return SF.LiteralExpression(SyntaxKind.NullLiteralExpression);
 			}
 
 			throw new Exception($"Unsupported type {t.Name}");
