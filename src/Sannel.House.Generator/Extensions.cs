@@ -490,6 +490,11 @@ namespace Sannel.House.Generator
 				return t.FullName.MemberAccess(values[selectedValue]);
 			}
 
+			if(t == typeof(Guid?))
+			{
+				return SF.LiteralExpression(SyntaxKind.NullLiteralExpression);
+			}
+
 			throw new Exception($"Unsupported type {t.Name}");
 
 		}
